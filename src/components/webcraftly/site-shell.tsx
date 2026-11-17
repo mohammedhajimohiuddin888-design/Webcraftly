@@ -64,34 +64,34 @@ export function SiteHeader() {
     : [];
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#0866D9]/15 bg-white/95 backdrop-blur-md transition-all shadow-xs">
+    <header className="sticky top-0 z-50 border-b border-[#0866D9]/20 bg-gradient-to-r from-[#EAF5FF]/98 via-[#E2F0FE]/98 to-[#EAF5FF]/98 backdrop-blur-md transition-all shadow-xs">
       {/* Top micro-bar with quick contact info from pamphlet */}
-      <div className="hidden border-b border-[#0866D9]/10 bg-[#EAF5FF]/60 px-4 py-1.5 text-xs text-[#071C55] md:block">
+      <div className="hidden border-b border-[#0866D9]/15 bg-[#0866D9]/8 px-4 py-1.5 text-xs text-[#071C55] md:block">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <div className="flex items-center gap-6">
-            <span className="flex items-center gap-1.5 font-medium text-[#0866D9]">
+            <span className="flex items-center gap-1.5 font-bold text-[#0866D9]">
               <Sparkles className="size-3.5 text-[#0866D9]" /> Code. Craft. Connect.
             </span>
-            <span className="text-[#667085]">Premium Digital Agency & Service Marketplace</span>
+            <span className="text-[#071C55]/70 font-medium">Premium Digital Agency & Service Marketplace</span>
           </div>
           <div className="flex items-center gap-5">
             <a
               href="https://wa.me/919618890557?text=Hi%20WebCraftly,%20I%20am%20interested%20in%20your%20services"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 font-semibold text-[#071C55] hover:text-[#0866D9] transition-colors"
+              className="flex items-center gap-1.5 font-bold text-[#071C55] hover:text-[#0866D9] transition-colors"
             >
               <MessageSquare className="size-3 text-[#0866D9]" /> WhatsApp: +91 96188 90557
             </a>
-            <span className="text-gray-300">|</span>
+            <span className="text-[#0866D9]/30">|</span>
             <a
               href="tel:+919346758686"
-              className="flex items-center gap-1.5 text-[#071C55] hover:text-[#0866D9] transition-colors"
+              className="flex items-center gap-1.5 font-semibold text-[#071C55] hover:text-[#0866D9] transition-colors"
             >
               <Phone className="size-3 text-[#0866D9]" /> +91 93467 58686
             </a>
-            <span className="text-gray-300">|</span>
-            <Link to="/orders" className="text-[#0866D9] hover:underline font-medium">
+            <span className="text-[#0866D9]/30">|</span>
+            <Link to="/orders" className="text-[#0866D9] hover:underline font-bold">
               Track Order
             </Link>
           </div>
@@ -101,13 +101,12 @@ export function SiteHeader() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         {/* Brand Logo & Name */}
         <Link to="/" className="flex items-center gap-3 group" aria-label="WebCraftly Home">
-          <div className="relative size-10 overflow-hidden rounded-xl border border-[#0866D9]/20 shadow-xs transition-transform group-hover:scale-105">
+          <div className="relative size-10 overflow-hidden rounded-xl border border-[#0866D9]/30 bg-white shadow-xs transition-transform group-hover:scale-105">
             <img
               src="/webcraftly-logo.jpg"
               alt="WebCraftly WC Logo"
               className="size-full object-cover"
               onError={(e) => {
-                // fallback if image fails to render
                 e.currentTarget.style.display = "none";
               }}
             />
@@ -120,24 +119,24 @@ export function SiteHeader() {
             <span className="font-extrabold text-xl tracking-tight text-[#071C55] leading-none">
               WEB <span className="text-[#0866D9]">CRAFTLY</span>
             </span>
-            <span className="text-[9.5px] font-bold tracking-[0.16em] text-[#667085] uppercase mt-0.5">
+            <span className="text-[9.5px] font-bold tracking-[0.16em] text-[#0866D9] uppercase mt-0.5">
               Code. Craft. Connect.
             </span>
           </div>
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden items-center gap-1 lg:flex" aria-label="Main Navigation">
+        <nav className="hidden items-center gap-1.5 lg:flex rounded-full bg-white/70 p-1 border border-[#0866D9]/15 shadow-2xs" aria-label="Main Navigation">
           {navigation.map((item) => {
             const isActive = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
             return (
               <Link
                 key={item.to}
                 to={item.to}
-                className={`px-3.5 py-1.5 rounded-full text-sm font-semibold transition-all ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
                   isActive
-                    ? "bg-[#EAF5FF] text-[#0866D9] shadow-xs"
-                    : "text-[#15233D] hover:text-[#0866D9] hover:bg-gray-50"
+                    ? "bg-[#0866D9] text-white shadow-xs"
+                    : "text-[#071C55] hover:text-[#0866D9] hover:bg-white"
                 }`}
               >
                 {item.label}
@@ -152,29 +151,29 @@ export function SiteHeader() {
           <button
             onClick={() => setSearchOpen((open) => !open)}
             aria-label="Search Services"
-            className="rounded-full p-2 text-[#15233D] hover:bg-[#EAF5FF] hover:text-[#0866D9] transition-colors"
+            className="rounded-full p-2 text-[#071C55] bg-white/70 border border-[#0866D9]/15 hover:bg-white hover:text-[#0866D9] transition-all shadow-2xs"
           >
-            {searchOpen ? <X className="size-5" /> : <Search className="size-5" />}
+            {searchOpen ? <X className="size-4.5" /> : <Search className="size-4.5" />}
           </button>
 
           {/* Account Icon */}
           <Link
             to="/account"
             aria-label="Customer Account"
-            className="rounded-full p-2 text-[#15233D] hover:bg-[#EAF5FF] hover:text-[#0866D9] transition-colors"
+            className="rounded-full p-2 text-[#071C55] bg-white/70 border border-[#0866D9]/15 hover:bg-white hover:text-[#0866D9] transition-all shadow-2xs"
           >
-            <UserRound className="size-5" />
+            <UserRound className="size-4.5" />
           </Link>
 
           {/* Shopping Cart Icon with Live Badge */}
           <Link
             to="/cart"
             aria-label={`Shopping Cart, ${count} items`}
-            className="relative rounded-full p-2 text-[#15233D] hover:bg-[#EAF5FF] hover:text-[#0866D9] transition-colors"
+            className="relative rounded-full p-2 text-[#071C55] bg-white/70 border border-[#0866D9]/15 hover:bg-white hover:text-[#0866D9] transition-all shadow-2xs"
           >
-            <ShoppingBag className="size-5" />
+            <ShoppingBag className="size-4.5" />
             {count > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 flex size-5 items-center justify-center rounded-full bg-[#0866D9] text-[11px] font-bold text-white shadow-xs animate-in zoom-in-75">
+              <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-[#0866D9] text-[11px] font-bold text-white shadow-xs ring-2 ring-white animate-in zoom-in-75">
                 {count}
               </span>
             )}
@@ -183,7 +182,7 @@ export function SiteHeader() {
           {/* Primary Action Button */}
           <Link
             to="/custom-quote"
-            className="hidden sm:inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#0866D9] to-[#248BEE] px-4 py-2 text-xs font-bold text-white shadow-md shadow-blue-500/20 hover:opacity-95 transition-opacity"
+            className="hidden sm:inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#0866D9] to-[#248BEE] px-4.5 py-2 text-xs font-bold text-white shadow-md shadow-blue-500/20 hover:opacity-95 transition-opacity"
           >
             Start Project <ArrowRight className="size-3.5" />
           </Link>
@@ -192,30 +191,30 @@ export function SiteHeader() {
           <button
             onClick={() => setMenuOpen((open) => !open)}
             aria-label={menuOpen ? "Close Navigation Menu" : "Open Navigation Menu"}
-            className="rounded-xl p-2 text-[#15233D] hover:bg-[#EAF5FF] lg:hidden"
+            className="rounded-xl p-2 text-[#071C55] bg-white/70 border border-[#0866D9]/15 hover:bg-white lg:hidden"
           >
-            {menuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
+            {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
         </div>
       </div>
 
       {/* Search Overlay Drawer */}
       {searchOpen && (
-        <div className="border-t border-[#0866D9]/15 bg-white px-4 py-4 sm:px-6 shadow-md animate-in slide-in-from-top-2">
+        <div className="border-t border-[#0866D9]/20 bg-[#EAF5FF]/95 backdrop-blur-md px-4 py-4 sm:px-6 shadow-md animate-in slide-in-from-top-2">
           <div className="mx-auto max-w-3xl">
             <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-[#667085]" />
+              <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-[#0866D9]" />
               <input
                 id="site-search"
                 autoFocus
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search services (e.g. Website Development, E-commerce, UI/UX, AI, SEO)..."
-                className="w-full rounded-xl border border-[#0866D9]/20 bg-[#F4F8FC] py-2.5 pl-10 pr-4 text-sm text-[#15233D] placeholder-[#667085] focus:border-[#0866D9] focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-[#0866D9]/20"
+                className="w-full rounded-xl border border-[#0866D9]/30 bg-white py-2.5 pl-10 pr-4 text-sm text-[#15233D] placeholder-[#667085] focus:border-[#0866D9] focus:outline-hidden focus:ring-2 focus:ring-[#0866D9]/20 shadow-xs"
               />
             </div>
             {search.trim() && (
-              <div className="mt-3 rounded-xl border border-gray-100 bg-white p-2 shadow-sm">
+              <div className="mt-3 rounded-xl border border-[#0866D9]/20 bg-white p-2 shadow-sm">
                 {matches.length > 0 ? (
                   matches.map((service) => (
                     <Link
@@ -253,7 +252,7 @@ export function SiteHeader() {
 
       {/* Mobile Drawer Navigation */}
       {menuOpen && (
-        <nav className="border-t border-[#0866D9]/15 bg-white px-4 py-4 lg:hidden animate-in slide-in-from-top-1">
+        <nav className="border-t border-[#0866D9]/20 bg-[#EAF5FF]/98 backdrop-blur-md px-4 py-4 lg:hidden animate-in slide-in-from-top-1">
           <div className="flex flex-col gap-1">
             {navigation.map((item) => {
               const isActive = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
@@ -262,27 +261,27 @@ export function SiteHeader() {
                   key={item.to}
                   to={item.to}
                   onClick={() => setMenuOpen(false)}
-                  className={`flex items-center justify-between rounded-xl px-4 py-3 text-base font-semibold transition-colors ${
-                    isActive ? "bg-[#EAF5FF] text-[#0866D9]" : "text-[#15233D] hover:bg-gray-50"
+                  className={`flex items-center justify-between rounded-xl px-4 py-3 text-sm font-bold transition-colors ${
+                    isActive ? "bg-[#0866D9] text-white shadow-xs" : "text-[#071C55] hover:bg-white"
                   }`}
                 >
                   {item.label}
-                  <ChevronRight className="size-4 text-[#667085]" />
+                  <ChevronRight className={`size-4 ${isActive ? "text-white" : "text-[#667085]"}`} />
                 </Link>
               );
             })}
-            <div className="mt-3 pt-3 border-t border-gray-100 flex flex-col gap-2">
+            <div className="mt-3 pt-3 border-t border-[#0866D9]/15 flex flex-col gap-2">
               <Link
                 to="/orders"
                 onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-2 px-4 py-2 text-sm text-[#071C55] font-medium"
+                className="flex items-center gap-2 px-4 py-2 text-xs text-[#071C55] font-bold"
               >
                 <Clock className="size-4 text-[#0866D9]" /> Track My Order
               </Link>
               <Link
                 to="/custom-quote"
                 onClick={() => setMenuOpen(false)}
-                className="flex items-center justify-center gap-2 rounded-xl bg-[#0866D9] py-3 text-sm font-bold text-white shadow-md shadow-blue-500/20"
+                className="flex items-center justify-center gap-2 rounded-xl bg-[#0866D9] py-3 text-xs font-bold text-white shadow-md shadow-blue-500/20"
               >
                 Start Your Project <ArrowRight className="size-4" />
               </Link>

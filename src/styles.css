@@ -1,0 +1,124 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, sans-serif;
+  --font-display: "Plus Jakarta Sans", sans-serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 16px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-brand-primary: #0866D9;
+  --color-brand-navy: #071C55;
+  --color-brand-secondary: #248BEE;
+  --color-brand-light: #EAF5FF;
+  --color-brand-text: #15233D;
+  --color-brand-muted: #667085;
+}
+
+:root {
+  --radius: 0.75rem;
+  --background: #FFFFFF;
+  --foreground: #15233D;
+  --card: #FFFFFF;
+  --card-foreground: #15233D;
+  --popover: #FFFFFF;
+  --popover-foreground: #15233D;
+  --primary: #0866D9;
+  --primary-foreground: #FFFFFF;
+  --secondary: #EAF5FF;
+  --secondary-foreground: #071C55;
+  --muted: #F4F8FC;
+  --muted-foreground: #667085;
+  --accent: #EAF5FF;
+  --accent-foreground: #0866D9;
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+  --border: #E2ECF8;
+  --input: #E2ECF8;
+  --ring: #0866D9;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Custom WebCraftly Utility Classes */
+.bg-mesh-gradient {
+  background: radial-gradient(circle at 10% 20%, rgba(8, 102, 217, 0.08) 0%, transparent 40%),
+              radial-gradient(circle at 90% 10%, rgba(36, 139, 238, 0.1) 0%, transparent 45%),
+              radial-gradient(circle at 50% 90%, rgba(234, 245, 255, 0.8) 0%, transparent 60%),
+              #FFFFFF;
+}
+
+.bg-dot-pattern {
+  background-image: radial-gradient(rgba(8, 102, 217, 0.12) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.brand-gradient-text {
+  background: linear-gradient(135deg, #071C55 0%, #0866D9 55%, #248BEE 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.brand-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  background-color: #EAF5FF;
+  border: 1px solid rgba(8, 102, 217, 0.2);
+  color: #0866D9;
+  font-size: 0.775rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.card-hover-effect {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card-hover-effect:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px -8px rgba(8, 102, 217, 0.12);
+  border-color: rgba(8, 102, 217, 0.35);
+}

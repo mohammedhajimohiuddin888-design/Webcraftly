@@ -54,7 +54,7 @@ function PrivacyPage() {
           <div>
             <h2 className="text-base font-extrabold text-[#071C55] mb-2">5. Contact Our Privacy Officer</h2>
             <p className="text-[#667085]">
-              If you have any questions or data removal requests, please email us at <strong>privacy@webcraftly.agency</strong> or message us on WhatsApp at <strong>+91 96188 90557</strong>.
+              If you have any questions or data removal requests, please email us at <a href="mailto:webcraftly.official@gmail.com" className="font-bold text-[#0866D9] hover:underline">webcraftly.official@gmail.com</a> or message us on WhatsApp at <strong>+91 96188 90557</strong>.
             </p>
           </div>
         </div>

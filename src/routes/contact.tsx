@@ -144,7 +144,12 @@ function ContactPage() {
                   </div>
                   <div>
                     <span className="text-[#667085] block font-semibold">Official Email:</span>
-                    <span className="font-bold text-sm text-[#071C55]">hello@webcraftly.agency</span>
+                    <a
+                      href="mailto:webcraftly.official@gmail.com"
+                      className="font-bold text-sm text-[#0866D9] hover:underline"
+                    >
+                      webcraftly.official@gmail.com
+                    </a>
                   </div>
                 </div>
               </div>

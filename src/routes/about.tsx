@@ -114,9 +114,17 @@ function AboutPage() {
               </div>
 
               <div className="mt-8 pt-6 border-t border-gray-200/80 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="text-xs text-[#667085]">
-                  <span>WhatsApp: </span>
-                  <strong className="text-[#0866D9]">+91 96188 90557</strong>
+                <div className="text-xs text-[#667085] space-y-1">
+                  <div>
+                    <span>WhatsApp: </span>
+                    <strong className="text-[#0866D9]">+91 96188 90557</strong>
+                  </div>
+                  <div>
+                    <span>Email: </span>
+                    <a href="mailto:webcraftly.official@gmail.com" className="text-[#0866D9] font-bold hover:underline">
+                      webcraftly.official@gmail.com
+                    </a>
+                  </div>
                 </div>
                 <Link
                   to="/services"

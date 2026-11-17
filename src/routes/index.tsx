@@ -607,6 +607,12 @@ function HomePage() {
                   <span className="font-semibold">Client Inquiries Line</span>
                   <span className="font-bold text-[#0866D9]">+91 86397 11792</span>
                 </div>
+                <div className="rounded-xl bg-white p-4 border border-gray-100 shadow-xs flex justify-between items-center">
+                  <span className="font-semibold">Official Email</span>
+                  <a href="mailto:webcraftly.official@gmail.com" className="font-bold text-[#0866D9] hover:underline">
+                    webcraftly.official@gmail.com
+                  </a>
+                </div>
               </div>
 
               <div className="mt-6 pt-6 border-t border-gray-200/70 flex items-center justify-between">

@@ -9,6 +9,7 @@ import {
   X,
   Phone,
   MessageSquare,
+  Mail,
   Sparkles,
   ExternalLink,
   ShieldCheck,
@@ -76,19 +77,19 @@ export function SiteHeader() {
           </div>
           <div className="flex items-center gap-5">
             <a
+              href="mailto:webcraftly.official@gmail.com"
+              className="flex items-center gap-1.5 font-semibold text-[#071C55] hover:text-[#0866D9] transition-colors"
+            >
+              <Mail className="size-3 text-[#0866D9]" /> webcraftly.official@gmail.com
+            </a>
+            <span className="text-[#0866D9]/30">|</span>
+            <a
               href="https://wa.me/919618890557?text=Hi%20WebCraftly,%20I%20am%20interested%20in%20your%20services"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 font-bold text-[#071C55] hover:text-[#0866D9] transition-colors"
             >
-              <MessageSquare className="size-3 text-[#0866D9]" /> WhatsApp: +91 96188 90557
-            </a>
-            <span className="text-[#0866D9]/30">|</span>
-            <a
-              href="tel:+919346758686"
-              className="flex items-center gap-1.5 font-semibold text-[#071C55] hover:text-[#0866D9] transition-colors"
-            >
-              <Phone className="size-3 text-[#0866D9]" /> +91 93467 58686
+              <MessageSquare className="size-3 text-[#0866D9]" /> WA: +91 96188 90557
             </a>
             <span className="text-[#0866D9]/30">|</span>
             <Link to="/orders" className="text-[#0866D9] hover:underline font-bold">
@@ -352,7 +353,16 @@ export function SiteFooter() {
               "Turn your ideas into powerful websites and grow your online presence with WebCraftly."
             </p>
 
-            <div className="mt-6 flex flex-col gap-2 text-xs text-blue-200">
+            <div className="mt-6 flex flex-col gap-2.5 text-xs text-blue-200">
+              <div className="flex items-center gap-2">
+                <Mail className="size-4 text-[#248BEE]" />
+                <a
+                  href="mailto:webcraftly.official@gmail.com"
+                  className="hover:text-white font-medium transition-colors"
+                >
+                  webcraftly.official@gmail.com
+                </a>
+              </div>
               <div className="flex items-center gap-2">
                 <MessageSquare className="size-4 text-[#248BEE]" />
                 <span>WhatsApp: +91 96188 90557 / +91 93467 58686</span>

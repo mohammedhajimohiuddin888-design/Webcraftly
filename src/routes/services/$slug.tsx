@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   ArrowRight,
   CheckCircle2,
@@ -39,7 +39,28 @@ function ServiceDetailPage() {
   const { slug } = Route.useParams();
   const navigate = useNavigate();
 
-  const service = services.find((s) => s.slug === slug);
+  const [service, setService] = useState(services.find((s) => s.slug === slug));
+
+  useEffect(() => {
+    fetch("/api/catalog")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.services) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const match = data.services.find((s: any) => s.slug === slug);
+          if (match) {
+            setService((prev) => ({
+              ...(prev || {}),
+              ...match,
+              comparisonTable: match.comparisonTable?.length
+                ? match.comparisonTable
+                : prev?.comparisonTable || [],
+            }));
+          }
+        }
+      })
+      .catch(() => {});
+  }, [slug]);
 
   // Default state for package selection and add-ons
   const [selectedTier, setSelectedTier] = useState<PackageTier>("Professional");
@@ -370,7 +391,7 @@ function ServiceDetailPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {service.comparisonTable.map((row, idx) => (
+                  {(service.comparisonTable || []).map((row, idx) => (
                     <tr key={idx} className="hover:bg-gray-50/50">
                       <td className="py-3.5 font-semibold text-[#15233D]">{row.feature}</td>
                       <td className="py-3.5 text-center text-[#667085]">

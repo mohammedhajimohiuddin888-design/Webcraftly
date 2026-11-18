@@ -11,60 +11,90 @@ import {
   FileText,
   Calendar,
   Layers,
-  Sparkles
+  Sparkles,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
-  getStoredOrders,
   formatINR,
   type Order,
-  type OrderStatus
 } from "@/lib/webcraftly";
 
 export const Route = createFileRoute("/orders/")({
   component: OrderTrackingPage,
 });
 
-const statusSteps: OrderStatus[] = [
-  "Pending",
+const statusSteps = [
+  "Pending Confirmation",
   "Confirmed",
   "In Progress",
   "Under Review",
   "Completed",
 ];
 
-function getStatusStepIndex(status: OrderStatus): number {
+function getStatusStepIndex(status: string): number {
   if (status === "Cancelled") return -1;
-  const idx = statusSteps.indexOf(status);
+  const normalized = status === "Pending" ? "Pending Confirmation" : status;
+  const idx = statusSteps.indexOf(normalized);
   return idx >= 0 ? idx : 0;
 }
 
-function OrderTrackingPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
+export function OrderTrackingPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [orders, setOrders] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const list = getStoredOrders();
-    setOrders(list);
-    if (list.length > 0) {
-      setSelectedOrder(list[0]);
-    }
+    // Fetch live orders from Neon PostgreSQL
+    fetch("/api/orders")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.orders && data.orders.length > 0) {
+          setOrders(data.orders);
+          setSelectedOrder(data.orders[0]);
+        }
+      })
+      .catch(() => {});
   }, []);
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    const query = searchQuery.trim().toLowerCase();
+    const query = searchQuery.trim();
     if (!query) return;
 
-    const match = orders.find(
-      (o) =>
-        o.id.toLowerCase() === query ||
-        o.customer.email.toLowerCase() === query ||
-        o.customer.phone.includes(query)
+    // First check in loaded list
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const localMatch = orders.find((o: any) =>
+      o.id.toLowerCase() === query.toLowerCase() ||
+      (o.customerEmail && o.customerEmail.toLowerCase() === query.toLowerCase()) ||
+      (o.customerPhone && o.customerPhone.includes(query))
     );
 
-    if (match) {
-      setSelectedOrder(match);
+    if (localMatch) {
+      setSelectedOrder(localMatch);
+      toast.success(`Found order: ${localMatch.id}`);
+      return;
+    }
+
+    // Otherwise, fetch directly from Neon via /api/orders/:id
+    try {
+      setIsLoading(true);
+      const res = await fetch(`/api/orders/${encodeURIComponent(query)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.order) {
+          setSelectedOrder(data.order);
+          toast.success(`Found order: ${data.order.id}`);
+          return;
+        }
+      }
+      toast.error(`Order '${query}' was not found. Please verify your reference ID.`);
+    } catch {
+      toast.error("Failed to query order. Please check your reference ID.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -90,15 +120,16 @@ function OrderTrackingPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Enter Order ID (e.g. WC-2026-84920)..."
+                placeholder="Enter Order ID (e.g. WC-2026-XXXXX)..."
                 className="w-full rounded-full border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-xs font-semibold text-[#071C55] placeholder-[#667085] focus:border-[#0866D9] focus:outline-hidden shadow-xs"
               />
             </div>
             <button
               type="submit"
-              className="rounded-full bg-[#0866D9] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#071C55] transition-colors"
+              disabled={isLoading}
+              className="rounded-full bg-[#0866D9] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#071C55] transition-colors disabled:opacity-50"
             >
-              Track
+              {isLoading ? "Searching..." : "Track"}
             </button>
           </form>
         </div>
@@ -116,10 +147,11 @@ function OrderTrackingPage() {
                 </span>
                 <span className="text-xs text-[#667085] block mt-0.5">
                   Placed on {new Date(selectedOrder.createdAt).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })}
+                  {selectedOrder.customerName && ` • Client: ${selectedOrder.customerName}`}
                 </span>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <span
                   className={`rounded-full px-4 py-1.5 text-xs font-extrabold uppercase tracking-wide ${
                     selectedOrder.status === "Completed"
@@ -131,8 +163,17 @@ function OrderTrackingPage() {
                 >
                   ● {selectedOrder.status}
                 </span>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-bold ${
+                    selectedOrder.paymentStatus === "Paid"
+                      ? "bg-emerald-100 text-emerald-800"
+                      : "bg-amber-100 text-amber-800"
+                  }`}
+                >
+                  {selectedOrder.paymentStatus || "Awaiting Payment"}
+                </span>
                 <a
-                  href={`https://wa.me/919618890557?text=Hi%20WebCraftly,%20checking%20status%20for%20order%20${selectedOrder.id}`}
+                  href={`https://wa.me/919618805557?text=Hi%20WebCraftly,%20checking%20status%20for%20order%20${selectedOrder.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 rounded-full border border-green-500/30 bg-green-50 px-4 py-1.5 text-xs font-bold text-green-700 hover:bg-green-100 transition-colors"
@@ -193,27 +234,29 @@ function OrderTrackingPage() {
                 <span className="text-xs font-bold text-[#071C55] uppercase tracking-wider block">
                   Services Included in This Order
                 </span>
-                {selectedOrder.items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="rounded-2xl border border-gray-100 bg-[#F4F8FC] p-4 text-xs"
-                  >
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-extrabold text-sm text-[#071C55]">
-                        {item.serviceName}
-                      </h4>
-                      <span className="font-bold text-[#0866D9]">{item.packageName} Tier</span>
-                    </div>
-                    <span className="text-[#667085] mt-1 block">
-                      Total: {formatINR(item.totalPrice)}
-                    </span>
-                    {item.addOns.length > 0 && (
-                      <div className="mt-2 text-[11px] text-[#667085]">
-                        Add-ons: {item.addOns.map((a) => a.name).join(", ")}
+                {selectedOrder.items &&
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  selectedOrder.items.map((item: any, idx: number) => (
+                    <div
+                      key={item.id || idx}
+                      className="rounded-2xl border border-gray-100 bg-[#F4F8FC] p-4 text-xs"
+                    >
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-extrabold text-sm text-[#071C55]">
+                          {item.serviceName}
+                        </h4>
+                        <span className="font-bold text-[#0866D9]">{item.packageName} Tier</span>
                       </div>
-                    )}
-                  </div>
-                ))}
+                      <span className="text-[#667085] mt-1 block">
+                        Total: {formatINR(item.totalPrice)}
+                      </span>
+                      {item.addOns && item.addOns.length > 0 && (
+                        <div className="mt-2 text-[11px] text-[#667085]">
+                          Add-ons: {item.addOns.map((a: { name: string }) => a.name).join(", ")}
+                        </div>
+                      )}
+                    </div>
+                  ))}
               </div>
 
               {/* Right: Client Requirements Brief */}
@@ -225,25 +268,29 @@ function OrderTrackingPage() {
                   <div>
                     <span className="text-[#667085] block font-semibold">Description:</span>
                     <p className="text-[#15233D] mt-0.5 leading-relaxed">
-                      {selectedOrder.requirements.projectDescription}
+                      {selectedOrder.projectDescription || selectedOrder.requirements?.projectDescription}
                     </p>
                   </div>
-                  {selectedOrder.requirements.referenceUrl && (
+                  {selectedOrder.referenceUrl && (
                     <div>
                       <span className="text-[#667085] block font-semibold">Reference Link:</span>
                       <a
-                        href={selectedOrder.requirements.referenceUrl}
+                        href={selectedOrder.referenceUrl}
                         target="_blank"
                         rel="noreferrer"
                         className="text-[#0866D9] hover:underline break-all"
                       >
-                        {selectedOrder.requirements.referenceUrl}
+                        {selectedOrder.referenceUrl}
                       </a>
                     </div>
                   )}
                   <div className="pt-2 border-t border-gray-200/60 flex justify-between">
-                    <span className="text-[#667085]">Payment Status:</span>
-                    <span className="font-bold text-emerald-600">{selectedOrder.paymentStatus}</span>
+                    <span className="text-[#667085]">Verified Total:</span>
+                    <span className="font-bold text-[#071C55]">{formatINR(selectedOrder.total)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#667085]">Payment Method:</span>
+                    <span className="font-semibold text-emerald-700">WhatsApp Assisted Commerce</span>
                   </div>
                 </div>
               </div>
@@ -253,7 +300,7 @@ function OrderTrackingPage() {
           <div className="rounded-3xl border border-dashed border-gray-300 p-12 text-center bg-white">
             <h3 className="font-bold text-lg text-[#071C55]">No Orders Found</h3>
             <p className="mt-1 text-xs text-[#667085]">
-              Please place an order or search using your valid Order ID.
+              Please place an order or search using your valid Order Reference ID.
             </p>
             <Link
               to="/services"

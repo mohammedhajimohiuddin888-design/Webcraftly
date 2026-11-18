@@ -12,7 +12,8 @@ import {
   Sparkles,
   ArrowLeft,
   ShoppingBag,
-  ExternalLink
+  ExternalLink,
+  MessageSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -48,16 +49,31 @@ function CheckoutPage() {
   const [deliveryTimeline, setDeliveryTimeline] = useState("Standard Timeline");
 
   // Form State: Step 4 Payment Selection
-  const [paymentMethod, setPaymentMethod] = useState<"upi_transfer" | "razorpay" | "bank_wire">("upi_transfer");
+  const [paymentMethod, setPaymentMethod] = useState<"whatsapp_manual" | "upi_transfer" | "bank_wire">("whatsapp_manual");
   const [paymentReference, setPaymentReference] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [confirmedOrder, setConfirmedOrder] = useState<Order | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [confirmedOrder, setConfirmedOrder] = useState<any | null>(null);
+  const [whatsappUrl, setWhatsappUrl] = useState<string>("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const cart = parseCart(window.localStorage.getItem(cartStorageKey));
       setItems(cart);
     }
+
+    // Pre-fill user profile if logged in
+    fetch("/api/auth/get-session")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.user) {
+          if (data.user.name) setFullName(data.user.name);
+          if (data.user.email) setEmail(data.user.email);
+          if (data.user.phone) setPhone(data.user.phone);
+          if (data.user.businessName) setBusinessName(data.user.businessName);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
@@ -82,47 +98,52 @@ function CheckoutPage() {
     setStep(3);
   };
 
-  const handleCompleteOrder = () => {
+  const handleCompleteOrder = async () => {
     setIsProcessing(true);
 
-    const uniqueOrderId = `WC-2026-${Math.floor(10000 + Math.random() * 90000)}`;
-
-    const newOrder: Order = {
-      id: uniqueOrderId,
-      createdAt: new Date().toISOString(),
-      status: "Confirmed",
-      customer: {
-        fullName,
-        email,
-        phone,
-        businessName: businessName || undefined,
-      },
-      requirements: {
-        projectDescription,
-        referenceUrl: referenceUrl || undefined,
-        requiredFeatures: requiredFeatures || undefined,
-        specialInstructions: specialInstructions || undefined,
-        deliveryTimeline,
-      },
-      items,
-      subtotal,
-      discount: 0,
-      total: finalTotal,
-      paymentMethod,
-      paymentStatus: "Verified",
-      paymentReference: paymentReference || `VERIFIED-${Math.floor(100000 + Math.random() * 900000)}`,
-    };
-
-    setTimeout(() => {
-      saveOrder(newOrder);
-      clearCart();
-      setConfirmedOrder(newOrder);
-      setIsProcessing(false);
-      setStep(5);
-      toast.success("Order confirmed successfully!", {
-        description: `Order ID: ${uniqueOrderId}. Our team has received your specifications.`,
+    try {
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerName: fullName.trim(),
+          customerEmail: email.trim(),
+          customerPhone: phone.trim(),
+          customerBusinessName: businessName.trim() || undefined,
+          projectDescription: projectDescription.trim(),
+          referenceUrl: referenceUrl.trim() || undefined,
+          requiredFeatures: requiredFeatures.trim() || undefined,
+          specialInstructions: specialInstructions.trim() || undefined,
+          deliveryTimeline,
+          items: items.map((i) => ({
+            serviceSlug: i.serviceSlug,
+            serviceName: i.serviceName,
+            packageName: i.packageName,
+            packagePrice: i.packagePrice,
+            addOns: i.addOns,
+            notes: i.notes,
+          })),
+        }),
       });
-    }, 800);
+
+      const data = await response.json();
+      if (!response.ok || !data.order) {
+        throw new Error(data.error || "Failed to create order");
+      }
+
+      clearCart();
+      setConfirmedOrder(data.order);
+      setWhatsappUrl(data.whatsappUrl);
+      setStep(5);
+      toast.success("Order registered successfully!", {
+        description: `Order ID: ${data.order.id}. Connect via WhatsApp to confirm kickoff.`,
+      });
+    } catch (err: unknown) {
+      const error = err as Error;
+      toast.error(error.message || "Failed to submit order. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (items.length === 0 && step !== 5) {
@@ -449,113 +470,40 @@ function CheckoutPage() {
         {step === 4 && (
           <div className="mx-auto max-w-2xl rounded-3xl border border-gray-200 bg-white p-8 shadow-md">
             <h2 className="text-xl font-extrabold text-[#071C55] mb-2">
-              Step 4: Select Payment Method
+              Step 4: Confirm Order & Payment Workflow
             </h2>
             <p className="text-xs text-[#667085] mb-6">
-              Choose your preferred payment method in Indian Rupees (₹).
+              WebCraftly works with transparent WhatsApp-assisted commerce. Discuss custom milestones, verify deliverables, and settle payment directly with our team.
             </p>
 
-            <div className="space-y-3 mb-6">
-              {/* Option 1: Direct UPI / QR Code */}
+            <div className="space-y-4 mb-6">
+              {/* Option 1: WhatsApp Assisted Commerce */}
               <div
-                onClick={() => setPaymentMethod("upi_transfer")}
-                className={`rounded-2xl border p-4.5 cursor-pointer transition-all ${
-                  paymentMethod === "upi_transfer"
-                    ? "border-[#0866D9] bg-[#EAF5FF]/60 ring-2 ring-[#0866D9]/20"
-                    : "border-gray-200 bg-white hover:border-[#0866D9]/30"
-                }`}
+                onClick={() => setPaymentMethod("whatsapp_manual")}
+                className="rounded-2xl border border-emerald-500 bg-emerald-50/50 p-5 cursor-pointer ring-2 ring-emerald-500/20"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <QrCode className="size-5 text-[#0866D9]" />
-                    <div>
-                      <h4 className="font-bold text-sm text-[#071C55]">
-                        Instant UPI & QR Code (Google Pay, PhonePe, Paytm)
-                      </h4>
-                      <p className="text-xs text-[#667085]">
-                        Direct transfer to official WebCraftly UPI ID with immediate receipt
-                      </p>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-3.5">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
+                      <MessageSquare className="size-5" />
                     </div>
-                  </div>
-                  <span className="text-xs font-bold text-emerald-600">Zero Gateway Fees</span>
-                </div>
-
-                {paymentMethod === "upi_transfer" && (
-                  <div className="mt-4 border-t border-blue-200/50 pt-3 text-xs space-y-2">
-                    <div className="rounded-xl bg-white p-3 border border-blue-100 flex items-center justify-between">
-                      <div>
-                        <span className="text-[10px] text-[#667085] uppercase tracking-wider block">Official WebCraftly UPI ID</span>
-                        <span className="font-black text-sm text-[#0866D9]">webcraftly@icici</span>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-extrabold text-sm text-[#071C55]">
+                          Order via WhatsApp & Discuss Payment
+                        </h4>
+                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                          Official Workflow
+                        </span>
                       </div>
-                      <span className="text-xs font-semibold text-[#071C55]">WhatsApp: +91 96188 90557</span>
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-[#071C55] mb-1">
-                        UPI Transaction ID / UTR Number (Optional for instant record)
-                      </label>
-                      <input
-                        type="text"
-                        value={paymentReference}
-                        onChange={(e) => setPaymentReference(e.target.value)}
-                        placeholder="e.g. 41298402910"
-                        className="w-full rounded-xl border border-gray-200 bg-white p-2.5 text-xs text-[#071C55]"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Option 2: Razorpay Gateway Mode */}
-              <div
-                onClick={() => setPaymentMethod("razorpay")}
-                className={`rounded-2xl border p-4.5 cursor-pointer transition-all ${
-                  paymentMethod === "razorpay"
-                    ? "border-[#0866D9] bg-[#EAF5FF]/60 ring-2 ring-[#0866D9]/20"
-                    : "border-gray-200 bg-white hover:border-[#0866D9]/30"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <CreditCard className="size-5 text-[#0866D9]" />
-                    <div>
-                      <h4 className="font-bold text-sm text-[#071C55]">
-                        Razorpay Gateway (Credit/Debit Card, Netbanking, EMI)
-                      </h4>
-                      <p className="text-xs text-[#667085]">
-                        Secure card and internet banking processing via Razorpay
+                      <p className="text-xs text-[#667085] mt-1">
+                        Connect directly with our team (+91 96188 05557) to finalize delivery milestones, confirm scope, and receive verified payment instructions.
                       </p>
-                    </div>
-                  </div>
-                </div>
-
-                {paymentMethod === "razorpay" && (
-                  <div className="mt-4 border-t border-blue-200/50 pt-3 text-xs text-[#667085]">
-                    <p>
-                      Orders processed through Razorpay Sandbox/Live environment. You will receive an official digital invoice immediately after checkout confirmation.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Option 3: Corporate Bank Wire / NEFT */}
-              <div
-                onClick={() => setPaymentMethod("bank_wire")}
-                className={`rounded-2xl border p-4.5 cursor-pointer transition-all ${
-                  paymentMethod === "bank_wire"
-                    ? "border-[#0866D9] bg-[#EAF5FF]/60 ring-2 ring-[#0866D9]/20"
-                    : "border-gray-200 bg-white hover:border-[#0866D9]/30"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <FileText className="size-5 text-[#0866D9]" />
-                    <div>
-                      <h4 className="font-bold text-sm text-[#071C55]">
-                        Bank Wire / NEFT / RTGS (Corporate Billing)
-                      </h4>
-                      <p className="text-xs text-[#667085]">
-                        Proforma invoice generated for company account settlement
-                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold text-emerald-800">
+                        <span className="rounded-md bg-white/80 border border-emerald-200 px-2 py-1">✓ Instant UPI (GPay/PhonePe/Paytm)</span>
+                        <span className="rounded-md bg-white/80 border border-emerald-200 px-2 py-1">✓ Bank IMPS / NEFT</span>
+                        <span className="rounded-md bg-white/80 border border-emerald-200 px-2 py-1">✓ Milestone Sprints</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -565,7 +513,7 @@ function CheckoutPage() {
             <div className="rounded-2xl bg-[#F4F8FC] p-4 text-xs text-[#667085] flex items-center gap-2.5 mb-6">
               <ShieldCheck className="size-4 text-[#0866D9] shrink-0" />
               <span>
-                All projects are backed by WebCraftly's 100% Client Satisfaction Guarantee and scheduled delivery milestones.
+                Your order is safely recorded in our Neon database before opening WhatsApp. All payment records are verified into your append-only client ledger.
               </span>
             </div>
 
@@ -581,10 +529,10 @@ function CheckoutPage() {
                 type="button"
                 disabled={isProcessing}
                 onClick={handleCompleteOrder}
-                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#0866D9] to-[#248BEE] px-8 py-3.5 text-xs font-black text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all disabled:opacity-50"
+                className="flex items-center gap-2 rounded-full bg-emerald-600 px-8 py-3.5 text-xs font-black text-white shadow-lg shadow-emerald-600/25 hover:bg-emerald-700 hover:shadow-emerald-600/40 hover:-translate-y-0.5 transition-all disabled:opacity-50"
               >
-                <Lock className="size-3.5" />
-                {isProcessing ? "Confirming Order..." : `Pay & Confirm Order (${formatINR(finalTotal)})`}
+                <MessageSquare className="size-4" />
+                {isProcessing ? "Saving Order..." : `Order via WhatsApp (${formatINR(finalTotal)})`}
               </button>
             </div>
           </div>
@@ -597,69 +545,74 @@ function CheckoutPage() {
               <CheckCircle2 className="size-10" />
             </div>
 
-            <span className="brand-pill mt-6">Order Confirmed</span>
+            <span className="brand-pill mt-6">Order Registered</span>
             <h2 className="mt-3 text-3xl font-extrabold text-[#071C55]">
-              Thank You For Your Order!
+              Order Successfully Placed!
             </h2>
             <p className="mt-2 text-sm text-[#667085]">
-              Your project order has been verified and registered with WebCraftly.
+              Your project order has been recorded in Neon PostgreSQL. Click below to connect on WhatsApp to confirm payment and schedule kickoff.
             </p>
 
             {/* Order Details Card */}
             <div className="mt-8 rounded-2xl border border-gray-100 bg-[#F4F8FC] p-6 text-left text-xs space-y-3">
               <div className="flex items-center justify-between border-b border-gray-200 pb-3">
-                <span className="text-[#667085]">Order ID:</span>
+                <span className="text-[#667085]">Order Reference:</span>
                 <span className="font-black text-base text-[#0866D9] font-mono">
                   {confirmedOrder.id}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[#667085]">Client Name:</span>
-                <span className="font-bold text-[#071C55]">{confirmedOrder.customer.fullName}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[#667085]">Services Ordered:</span>
                 <span className="font-bold text-[#071C55]">
-                  {confirmedOrder.items.map((i) => `${i.serviceName} (${i.packageName})`).join(", ")}
+                  {confirmedOrder.customerName || confirmedOrder.customer?.fullName}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[#667085]">Total Amount:</span>
+                <span className="text-[#667085]">Verified Total:</span>
                 <span className="font-black text-base text-[#071C55]">{formatINR(confirmedOrder.total)}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[#667085]">Status:</span>
+                <span className="text-[#667085]">Order Status:</span>
+                <span className="rounded-full bg-amber-100 px-3 py-0.5 font-bold text-amber-800">
+                  {confirmedOrder.status || "Pending Confirmation"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[#667085]">Payment Status:</span>
                 <span className="rounded-full bg-blue-100 px-3 py-0.5 font-bold text-[#0866D9]">
-                  {confirmedOrder.status}
+                  {confirmedOrder.paymentStatus || "Awaiting Payment"}
                 </span>
               </div>
             </div>
 
-            {/* Next Steps Buttons */}
+            {/* Continue to WhatsApp Button */}
             <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3">
+              <a
+                href={whatsappUrl || `https://wa.me/919618805557?text=Hi%20WebCraftly,%20I%20have%20submitted%20order%20${confirmedOrder.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-8 py-3.5 text-xs font-black text-white shadow-lg shadow-emerald-600/25 hover:bg-emerald-700 hover:shadow-emerald-600/40 transition-all"
+              >
+                <MessageSquare className="size-4" />
+                Continue to WhatsApp (+91 96188 05557)
+              </a>
               <Link
                 to="/orders"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#0866D9] px-7 py-3.5 text-xs font-bold text-white shadow-md hover:bg-[#071C55] transition-colors"
-              >
-                Track This Order Live <ArrowRight className="size-4" />
-              </Link>
-              <Link
-                to="/account"
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-7 py-3.5 text-xs font-bold text-[#071C55] hover:bg-gray-50 transition-colors"
               >
-                View Customer Dashboard
+                Track Order Live
               </Link>
             </div>
 
             <div className="mt-6 pt-6 border-t border-gray-100 text-xs text-[#667085]">
-              Need immediate updates? WhatsApp our direct project lead:{" "}
+              Direct founder line:{" "}
               <a
-                href={`https://wa.me/919618890557?text=Hi%20WebCraftly,%20I%20just%20placed%20order%20${confirmedOrder.id}`}
+                href="https://wa.me/919618805557"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[#0866D9] font-bold hover:underline"
               >
-                +91 96188 90557
+                +91 96188 05557
               </a>
             </div>
           </div>

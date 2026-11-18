@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   CheckCircle2,
   Clock,
@@ -10,16 +10,32 @@ import {
   Sparkles,
   Zap
 } from "lucide-react";
-import { services, formatINR, type PackageTier } from "@/lib/webcraftly";
+import { services, formatINR, type PackageTier, type Service } from "@/lib/webcraftly";
 
 export const Route = createFileRoute("/pricing")({
   component: PricingPage,
 });
 
 function PricingPage() {
+  const [catalogServices, setCatalogServices] = useState<Service[]>(services);
   const [activeServiceSlug, setActiveServiceSlug] = useState<string>("website-development");
 
-  const currentService = services.find((s) => s.slug === activeServiceSlug) || services[0];
+  useEffect(() => {
+    fetch("/api/catalog")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.services && data.services.length > 0) {
+          setCatalogServices(data.services);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const defaultService = services[0] as Service;
+  const currentService =
+    catalogServices.find((s) => s.slug === activeServiceSlug) ??
+    catalogServices[0] ??
+    defaultService;
 
   return (
     <div className="min-h-screen bg-white">
@@ -42,7 +58,7 @@ function PricingPage() {
       <section className="sticky top-[69px] z-30 border-b border-gray-200 bg-white/95 backdrop-blur-md py-3.5">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-            {services.map((svc) => (
+            {catalogServices.map((svc) => (
               <button
                 key={svc.slug}
                 onClick={() => setActiveServiceSlug(svc.slug)}

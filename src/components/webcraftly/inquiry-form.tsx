@@ -84,6 +84,6 @@ export function InquiryForm({ cart = [], initialService = "", inquiryType = "quo
   </form>;
 }
 
-function Field({ label, hint, error, className = "", children }: { label: string; hint?: string; error?: string; className?: string; children: React.ReactNode }) {
+function Field({ label, hint, error, className = "", children }: { label: string; hint?: string | undefined; error?: string | undefined; className?: string | undefined; children: React.ReactNode }) {
   return <label className={`form-field ${className}`}><span className="form-label">{label}{hint && <small>{hint}</small>}</span>{children}{error && <span className="field-error">{error}</span>}</label>;
 }

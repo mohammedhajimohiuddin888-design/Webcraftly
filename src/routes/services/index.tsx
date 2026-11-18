@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Code2,
   FileText,
@@ -45,14 +45,26 @@ function getServiceIcon(slug: string) {
 }
 
 function ServicesMarketplacePage() {
+  const [catalogServices, setCatalogServices] = useState<Service[]>(services);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [sortOption, setSortOption] = useState<"featured" | "price-asc" | "price-desc">("featured");
 
+  useEffect(() => {
+    fetch("/api/catalog")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.services && data.services.length > 0) {
+          setCatalogServices(data.services);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const categories = ["All", "Development", "Design", "Marketing", "AI & Systems"];
 
   const filteredServices = useMemo(() => {
-    return services
+    return catalogServices
       .filter((s) => {
         const matchesCat = selectedCategory === "All" || s.category === selectedCategory;
         const matchesQuery =

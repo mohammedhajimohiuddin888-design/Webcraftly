@@ -1270,13 +1270,13 @@ export type CustomQuoteInquiry = {
   fullName: string;
   email: string;
   phone: string;
-  businessName?: string;
+  businessName?: string | undefined;
   requiredService: string;
   budget: string;
   timeline: string;
   projectDescription: string;
-  referenceUrl?: string;
-  additionalRequirements?: string;
+  referenceUrl?: string | undefined;
+  additionalRequirements?: string | undefined;
   status: "New" | "Reviewed" | "Proposal Sent" | "Closed";
 };
 

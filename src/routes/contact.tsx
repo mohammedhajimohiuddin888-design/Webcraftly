@@ -9,7 +9,10 @@ import {
   Send,
   CheckCircle2,
   ShieldCheck,
-  Sparkles
+  Sparkles,
+  UserRound,
+  ArrowRight,
+  Lock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { saveInquiry, type CustomQuoteInquiry } from "@/lib/webcraftly";
@@ -163,6 +166,34 @@ function ContactPage() {
                 <p>Monday – Saturday: 9:00 AM – 8:00 PM IST</p>
                 <p>Sunday: Emergency & VIP Support Only</p>
               </div>
+
+              {/* Quick Portal Access Beside Contact Info */}
+              <div className="rounded-2xl border border-[#0866D9]/20 bg-gradient-to-br from-[#EAF5FF] to-white p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#0866D9]">
+                    Portal Logins
+                  </span>
+                  <span className="text-[10px] font-bold text-[#667085]">Instant Access</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Link
+                    to="/account"
+                    className="flex flex-col items-center justify-center text-center p-3 rounded-xl bg-white border border-[#0866D9]/15 hover:border-[#0866D9] hover:shadow-xs transition-all group"
+                  >
+                    <UserRound className="size-5 text-[#0866D9] mb-1 group-hover:scale-110 transition-transform" />
+                    <span className="font-extrabold text-xs text-[#071C55]">Customer Login</span>
+                    <span className="text-[9.5px] text-[#667085]">Orders & Quotes</span>
+                  </Link>
+                  <Link
+                    to="/account"
+                    className="flex flex-col items-center justify-center text-center p-3 rounded-xl bg-purple-50/70 border border-purple-200 hover:border-purple-500 hover:shadow-xs transition-all group"
+                  >
+                    <ShieldCheck className="size-5 text-purple-600 mb-1 group-hover:scale-110 transition-transform" />
+                    <span className="font-extrabold text-xs text-purple-950">Admin Login</span>
+                    <span className="text-[9.5px] text-purple-700 font-semibold truncate max-w-full px-1">mohammed...</span>
+                  </Link>
+                </div>
+              </div>
             </div>
 
             {/* Right 7 Cols: Inquiry Form */}
@@ -284,6 +315,103 @@ function ContactPage() {
                     </div>
                   </form>
                 )}
+              </div>
+            </div>
+          </div>
+
+          {/* Dedicated Section for Admin Login and Customer Login */}
+          <div className="mt-16 rounded-3xl border border-[#0866D9]/20 bg-gradient-to-br from-[#F4F8FC] via-white to-[#EAF5FF]/80 p-8 sm:p-12 shadow-lg">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#0866D9]/15 pb-6">
+              <div>
+                <span className="brand-pill">Secure Authentication</span>
+                <h2 className="mt-3 text-2xl sm:text-3xl font-extrabold text-[#071C55] tracking-tight">
+                  Customer & Administrator Portals
+                </h2>
+                <p className="mt-2 text-xs sm:text-sm text-[#667085] max-w-2xl leading-relaxed">
+                  Need to check your order progress or access the WebCraftly management suite? Choose your portal below for instant authenticated access.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-xs font-bold text-[#0866D9] shrink-0">
+                <Sparkles className="size-4" /> 256-Bit SSL Encrypted
+              </div>
+            </div>
+
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Customer Login Card */}
+              <div className="relative rounded-2xl border border-blue-100 bg-white p-7 shadow-xs hover:border-[#0866D9] transition-all flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex size-12 items-center justify-center rounded-2xl bg-[#0866D9]/10 text-[#0866D9]">
+                      <UserRound className="size-6" />
+                    </div>
+                    <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-extrabold text-[#0866D9] border border-blue-100">
+                      Client Access
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-extrabold text-[#071C55]">Customer Login</h3>
+                  <p className="mt-2 text-xs text-[#667085] leading-relaxed">
+                    Access your WebCraftly client dashboard to track ordered packages, submit revisions, inspect deliverables, and manage business profile contact info.
+                  </p>
+                  <ul className="mt-4 space-y-2 text-xs text-[#071C55]">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
+                      <span>Live status updates on Website & E-commerce orders</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
+                      <span>Direct WhatsApp handoff with reference IDs</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="mt-6 pt-5 border-t border-gray-100">
+                  <Link
+                    to="/account"
+                    className="flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-[#0866D9] to-[#248BEE] py-3 text-xs font-bold text-white shadow-md hover:shadow-lg transition-all"
+                  >
+                    <span>Sign In to Customer Account</span>
+                    <ArrowRight className="size-4" />
+                  </Link>
+                </div>
+              </div>
+
+              {/* Admin Login Card */}
+              <div className="relative rounded-2xl border border-purple-200 bg-gradient-to-br from-purple-50/50 to-white p-7 shadow-xs hover:border-purple-400 transition-all flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex size-12 items-center justify-center rounded-2xl bg-purple-600 text-white shadow-md shadow-purple-600/20">
+                      <ShieldCheck className="size-6" />
+                    </div>
+                    <span className="rounded-full bg-purple-100 px-3 py-1 text-[10px] font-extrabold text-purple-800 border border-purple-200">
+                      Management Only
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-extrabold text-[#071C55]">Admin Login</h3>
+                  <p className="mt-2 text-xs text-[#667085] leading-relaxed">
+                    Restricted executive portal for marketplace administration, manual payment approvals, project milestone confirmations, and financial reporting.
+                  </p>
+
+                  <div className="mt-4 rounded-xl bg-white border border-purple-200/80 p-3 text-xs space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 block">
+                      Designated Administrator Email:
+                    </span>
+                    <div className="flex items-center gap-2 font-mono font-bold text-xs text-purple-950">
+                      <Mail className="size-3.5 text-purple-600 shrink-0" />
+                      <span>mohammedhajimohiuddin888@gmail.com</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 pt-5 border-t border-purple-100">
+                  <Link
+                    to="/account"
+                    className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#071C55] py-3 text-xs font-bold text-white shadow-md hover:bg-purple-950 transition-all"
+                  >
+                    <Lock className="size-3.5 text-purple-300" />
+                    <span>Sign In as Admin (Mohammed)</span>
+                    <ArrowRight className="size-4 text-purple-300" />
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

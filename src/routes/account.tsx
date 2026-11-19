@@ -34,6 +34,7 @@ export function CustomerAccountPage() {
   const [authLoading, setAuthLoading] = useState(true);
 
   // Auth form state
+  const [authRole, setAuthRole] = useState<"customer" | "admin">("customer");
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
@@ -93,6 +94,16 @@ export function CustomerAccountPage() {
   useEffect(() => {
     loadSession();
     setInquiries(getStoredInquiries());
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const mode = params.get("mode") || params.get("role");
+      if (mode === "admin" || params.get("admin") === "true") {
+        setAuthRole("admin");
+        setAuthMode("signin");
+        setAuthEmail("mohammedhajimohiuddin888@gmail.com");
+      }
+    }
   }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -113,6 +124,13 @@ export function CustomerAccountPage() {
       }
       toast.success("Welcome back! Signed in successfully.");
       setAuthPassword("");
+      if (data.user?.role === "admin") {
+        toast.info("Admin privileges verified. Redirecting to Admin Dashboard...");
+        setTimeout(() => {
+          window.location.href = "/admin";
+        }, 500);
+        return;
+      }
       loadSession();
     } catch (err: unknown) {
       const error = err as Error;
@@ -197,47 +215,91 @@ export function CustomerAccountPage() {
       <div className="min-h-screen bg-[#F4F8FC]/50 py-12 lg:py-16">
         <div className="mx-auto max-w-md px-4 sm:px-6">
           <div className="text-center mb-8">
-            <span className="brand-pill">Client Portal</span>
+            <span className="brand-pill">
+              {authRole === "admin" ? "Admin Management Portal" : "Client & Admin Access"}
+            </span>
             <h1 className="mt-3 text-3xl font-extrabold text-[#071C55] tracking-tight">
-              Access Your WebCraftly Account
+              {authRole === "admin"
+                ? "Admin Portal Login"
+                : authMode === "signup"
+                ? "Create Your Client Account"
+                : "Access Your WebCraftly Account"}
             </h1>
             <p className="mt-2 text-xs text-[#667085]">
-              Track your development orders, view verified payment history, and communicate with project leads.
+              {authRole === "admin"
+                ? "Authorized administrative access for Mohammed Haji Mohiuddin (mohammedhajimohiuddin888@gmail.com)."
+                : "Track your development orders, view verified payment history, and communicate with project leads."}
             </p>
           </div>
 
           <div className="rounded-3xl border border-gray-200 bg-white p-7 sm:p-8 shadow-md">
-            {/* Mode Switcher */}
-            <div className="flex rounded-2xl bg-[#F4F8FC] p-1 mb-6 text-xs font-bold">
+            {/* Mode & Role Switcher */}
+            <div className="grid grid-cols-3 gap-1 rounded-2xl bg-[#F4F8FC] p-1 mb-6 text-xs font-bold">
               <button
                 type="button"
-                onClick={() => setAuthMode("signin")}
-                className={`flex-1 rounded-xl py-2 text-center transition-all ${
-                  authMode === "signin"
+                onClick={() => {
+                  setAuthRole("customer");
+                  setAuthMode("signin");
+                  if (authEmail === "mohammedhajimohiuddin888@gmail.com") setAuthEmail("");
+                }}
+                className={`rounded-xl py-2 px-1 text-center transition-all ${
+                  authRole === "customer" && authMode === "signin"
                     ? "bg-white text-[#0866D9] shadow-xs"
                     : "text-[#667085] hover:text-[#071C55]"
                 }`}
               >
-                Sign In
+                Customer
               </button>
               <button
                 type="button"
-                onClick={() => setAuthMode("signup")}
-                className={`flex-1 rounded-xl py-2 text-center transition-all ${
+                onClick={() => {
+                  setAuthRole("admin");
+                  setAuthMode("signin");
+                  setAuthEmail("mohammedhajimohiuddin888@gmail.com");
+                }}
+                className={`rounded-xl py-2 px-1 text-center transition-all flex items-center justify-center gap-1 ${
+                  authRole === "admin" && authMode === "signin"
+                    ? "bg-[#071C55] text-white shadow-xs"
+                    : "text-[#667085] hover:text-[#071C55]"
+                }`}
+              >
+                <ShieldCheck className="size-3.5 shrink-0" />
+                <span>Admin Login</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthRole("customer");
+                  setAuthMode("signup");
+                  if (authEmail === "mohammedhajimohiuddin888@gmail.com") setAuthEmail("");
+                }}
+                className={`rounded-xl py-2 px-1 text-center transition-all ${
                   authMode === "signup"
                     ? "bg-white text-[#0866D9] shadow-xs"
                     : "text-[#667085] hover:text-[#071C55]"
                 }`}
               >
-                Create Account
+                Register
               </button>
             </div>
+
+            {authRole === "admin" && authMode === "signin" && (
+              <div className="mb-5 rounded-2xl border border-blue-200 bg-blue-50/70 p-3.5 text-xs text-[#071C55] flex items-start gap-2.5">
+                <ShieldCheck className="size-4 text-[#0866D9] shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold">Verified Administrator Portal</p>
+                  <p className="text-[11px] text-[#667085] mt-0.5 leading-relaxed">
+                    Account configured for <span className="font-semibold text-[#071C55]">mohammedhajimohiuddin888@gmail.com</span>. Signing in with this email grants full access to the WebCraftly Admin Dashboard, order fulfillment, and client communications.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {authMode === "signin" ? (
               <form onSubmit={handleSignIn} className="space-y-4 text-xs">
                 <div>
                   <label className="block font-bold text-[#071C55] uppercase tracking-wider mb-1.5">
-                    Email Address
+                    {authRole === "admin" ? "Admin Email Address" : "Email Address"}
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-[#667085]" />
@@ -246,7 +308,7 @@ export function CustomerAccountPage() {
                       required
                       value={authEmail}
                       onChange={(e) => setAuthEmail(e.target.value)}
-                      placeholder="client@yourcompany.com"
+                      placeholder={authRole === "admin" ? "mohammedhajimohiuddin888@gmail.com" : "client@yourcompany.com"}
                       className="w-full rounded-xl border border-gray-200 bg-[#F4F8FC] py-2.5 pl-10 pr-3 text-xs text-[#071C55] focus:border-[#0866D9] focus:bg-white focus:outline-hidden"
                     />
                   </div>
@@ -272,9 +334,19 @@ export function CustomerAccountPage() {
                 <button
                   type="submit"
                   disabled={isSubmittingAuth}
-                  className="w-full mt-2 rounded-full bg-[#0866D9] py-3 text-xs font-bold text-white shadow-md hover:bg-[#071C55] transition-colors disabled:opacity-50"
+                  className={`w-full mt-2 rounded-full py-3 text-xs font-bold text-white shadow-md transition-colors disabled:opacity-50 ${
+                    authRole === "admin"
+                      ? "bg-[#071C55] hover:bg-[#0866D9]"
+                      : "bg-[#0866D9] hover:bg-[#071C55]"
+                  }`}
                 >
-                  {isSubmittingAuth ? "Signing in..." : "Sign In to Client Portal"}
+                  {isSubmittingAuth
+                    ? authRole === "admin"
+                      ? "Authenticating Admin..."
+                      : "Signing in..."
+                    : authRole === "admin"
+                    ? "Sign In to Admin Portal"
+                    : "Sign In to Client Portal"}
                 </button>
               </form>
             ) : (

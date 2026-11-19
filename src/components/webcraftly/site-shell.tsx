@@ -95,6 +95,14 @@ export function SiteHeader() {
             <Link to="/orders" className="text-[#0866D9] hover:underline font-bold">
               Track Order
             </Link>
+            <span className="text-[#0866D9]/30">|</span>
+            <Link to="/account" className="text-[#071C55] hover:text-[#0866D9] font-bold">
+              Customer Login
+            </Link>
+            <span className="text-[#0866D9]/30">|</span>
+            <Link to="/account" className="text-purple-700 hover:text-purple-900 font-bold flex items-center gap-1">
+              <ShieldCheck className="size-3 text-purple-600" /> Admin Login
+            </Link>
           </div>
         </div>
       </div>
@@ -144,6 +152,22 @@ export function SiteHeader() {
               </Link>
             );
           })}
+
+          <div className="h-4 w-px bg-gray-300 mx-0.5" />
+
+          {/* New Section for Customer Login and Admin Login beside Contact */}
+          <Link
+            to="/account"
+            className="px-3 py-1.5 rounded-full text-xs font-bold text-[#071C55] hover:text-[#0866D9] hover:bg-white transition-all flex items-center gap-1.5"
+          >
+            <UserRound className="size-3.5 text-[#0866D9]" /> Customer Login
+          </Link>
+          <Link
+            to="/account"
+            className="px-3 py-1.5 rounded-full text-xs font-bold text-purple-950 bg-purple-50/90 hover:bg-purple-100 hover:text-purple-950 transition-all flex items-center gap-1.5 border border-purple-200/70"
+          >
+            <ShieldCheck className="size-3.5 text-purple-600" /> Admin Login
+          </Link>
         </nav>
 
         {/* Right CTA & Action Icons */}
@@ -271,7 +295,39 @@ export function SiteHeader() {
                 </Link>
               );
             })}
-            <div className="mt-3 pt-3 border-t border-[#0866D9]/15 flex flex-col gap-2">
+            {/* New Section for Customer Login and Admin Login beside Contact in Mobile Menu */}
+            <div className="mt-2 pt-2 border-t border-[#0866D9]/15 flex flex-col gap-1.5">
+              <span className="px-3 text-[10px] font-extrabold uppercase tracking-wider text-[#667085]">
+                Account & Portals
+              </span>
+              <Link
+                to="/account"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center justify-between rounded-xl px-4 py-2.5 text-xs font-bold text-[#071C55] bg-white border border-[#0866D9]/15 hover:border-[#0866D9]"
+              >
+                <span className="flex items-center gap-2">
+                  <UserRound className="size-4 text-[#0866D9]" /> Customer Login
+                </span>
+                <ChevronRight className="size-3.5 text-[#667085]" />
+              </Link>
+              <Link
+                to="/account"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center justify-between rounded-xl px-4 py-2.5 text-xs font-bold text-purple-900 bg-purple-50 border border-purple-200 hover:border-purple-400"
+              >
+                <div className="flex flex-col">
+                  <span className="flex items-center gap-2 font-bold text-xs">
+                    <ShieldCheck className="size-4 text-purple-600" /> Admin Login
+                  </span>
+                  <span className="text-[10px] text-purple-700 ml-6 font-normal truncate">
+                    mohammedhajimohiuddin888@gmail.com
+                  </span>
+                </div>
+                <ChevronRight className="size-3.5 text-purple-400" />
+              </Link>
+            </div>
+
+            <div className="mt-2 pt-2 border-t border-[#0866D9]/15 flex flex-col gap-2">
               <Link
                 to="/orders"
                 onClick={() => setMenuOpen(false)}

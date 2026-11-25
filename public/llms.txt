@@ -1,0 +1,39 @@
+# WebCraftly
+
+> Code. Craft. Connect. — Premium Digital Agency & Service E-Commerce Marketplace.
+
+WebCraftly is an India-based full-service digital agency and service marketplace delivering custom website development, e-commerce storefronts, UI/UX design in Figma, full-stack web applications, and SEO optimization.
+
+- **Website**: https://webcraftly.vercel.app/
+- **Headquarters**: Hyderabad, Telangana, India (Geo: 17.385044, 78.486671)
+- **Target Markets**: India (Hyderabad, Bangalore, Mumbai, Delhi, Pan-India), United States, United Arab Emirates, United Kingdom, Worldwide
+- **Official Email**: webcraftly.official@gmail.com
+- **Official WhatsApp / Phone**: +91 96188 90557
+- **Starting Price**: From ₹3,999 (INR) with transparent milestones and zero hidden fees
+
+## Core Services & Pricing
+
+- **Website Development** (from ₹3,999): Business landing pages, corporate portfolios, custom responsive websites (Basic ₹3,999, Growth Commercial ₹24,999, Enterprise Custom ₹49,999).
+- **E-Commerce Development** (from ₹8,999): Online stores with shopping cart, catalog, checkout, order tracking, and UPI/WhatsApp assisted payment.
+- **UI/UX Design** (from ₹2,499): Figma design systems, wireframing, high-fidelity prototypes, user research, and mobile-first conversions.
+- **Web Applications** (from ₹14,999): Full-stack SaaS platforms, custom dashboards, client portals, dynamic databases with React, TypeScript, and Postgres.
+- **SEO & Search Visibility** (from ₹2,999): Technical audits, on-page SEO, schema markup, Google Search Console optimization, and local Hyderabad SEO.
+- **AI Integration & Automation** (from ₹5,999): Custom AI chatbots, workflow automation, and CRM integrations.
+- **Content & Copywriting** (from ₹1,999): SEO copy, brand messaging, landing page headlines, and technical content.
+
+## How Ordering Works
+
+1. **Browse & Configure**: Customers select a package tier on the service marketplace.
+2. **Order & Brief**: Complete the 4-step checkout wizard with project requirements and contact info.
+3. **Tracking & Milestones**: Receive an instant order tracking number (`WC-2026-XXXXX`) to track sprint milestones in real time.
+4. **WhatsApp Direct Onboarding**: Instant communication and project kickoff with the lead developer via +91 96188 90557.
+
+## Key Pages
+
+- [Homepage](https://webcraftly.vercel.app/)
+- [Services Marketplace](https://webcraftly.vercel.app/services)
+- [Pricing Matrix](https://webcraftly.vercel.app/pricing)
+- [Our Portfolio](https://webcraftly.vercel.app/portfolio)
+- [Order Tracking](https://webcraftly.vercel.app/orders)
+- [Contact & Quote](https://webcraftly.vercel.app/contact)
+- [FAQ](https://webcraftly.vercel.app/faq)

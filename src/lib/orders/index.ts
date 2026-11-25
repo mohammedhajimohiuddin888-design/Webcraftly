@@ -7,7 +7,7 @@
  * Append-Only Payment Ledger
  */
 
-import { db, schema } from "../db/index.ts";
+import { db, schema, sqlClient } from "../db/index.ts";
 import { getServerSession, requireAuth, requireAdmin } from "../auth/index.ts";
 import { eq, and, desc, sql } from "drizzle-orm";
 import crypto from "node:crypto";
@@ -853,4 +853,63 @@ export async function getAdminCustomers(request: Request) {
       orders: custOrders,
     };
   });
+}
+
+/**
+ * Admin: Delete a customer and their associated completed orders & payments.
+ */
+export async function deleteCustomer(request: Request, customerId: string) {
+  await requireAdmin(request);
+
+  const customer = await db.query.customers.findFirst({
+    where: eq(schema.customers.id, customerId),
+  });
+
+  if (!customer) {
+    const err = new Error("Customer record not found.");
+    (err as unknown as { status: number }).status = 404;
+    throw err;
+  }
+
+  // 1. Delete payments for customer's orders
+  await sqlClient`DELETE FROM payments WHERE order_id IN (SELECT id FROM orders WHERE customer_id = ${customerId})`;
+
+  // 2. Delete customer's orders
+  await sqlClient`DELETE FROM orders WHERE customer_id = ${customerId}`;
+
+  // 3. Delete customer record
+  await sqlClient`DELETE FROM customers WHERE id = ${customerId}`;
+
+  return {
+    success: true,
+    message: `Customer "${customer.name}" and associated records deleted successfully.`,
+  };
+}
+
+/**
+ * Admin: Delete a specific order and its associated payments.
+ */
+export async function deleteOrder(request: Request, orderId: string) {
+  await requireAdmin(request);
+
+  const order = await db.query.orders.findFirst({
+    where: eq(schema.orders.id, orderId),
+  });
+
+  if (!order) {
+    const err = new Error("Order not found.");
+    (err as unknown as { status: number }).status = 404;
+    throw err;
+  }
+
+  // 1. Delete payments for this order
+  await sqlClient`DELETE FROM payments WHERE order_id = ${orderId}`;
+
+  // 2. Delete the order
+  await sqlClient`DELETE FROM orders WHERE id = ${orderId}`;
+
+  return {
+    success: true,
+    message: `Order ${orderId} deleted successfully.`,
+  };
 }

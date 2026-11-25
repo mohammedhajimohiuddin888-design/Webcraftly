@@ -1,6 +1,7 @@
 import { db, schema, sqlClient } from "../src/lib/db/index.ts";
 import { auth } from "../src/lib/auth/index.ts";
 import { eq } from "drizzle-orm";
+import { hashPassword } from "@better-auth/utils/password";
 
 try {
   process.loadEnvFile?.(".env.local");
@@ -8,7 +9,7 @@ try {
 
 const adminEmail = process.argv[2] || "mohammedhajimohiuddin888@gmail.com";
 const adminName = process.argv[3] || "Mohammed Haji Mohiuddin";
-const adminPassword = process.env.ADMIN_PASSWORD || process.argv[4] || "Admin@WebCraftly2026!";
+const adminPassword = process.env.ADMIN_PASSWORD || process.argv[4] || "HAJI9346";
 
 async function provisionAdmin() {
   console.log(`\n======================================================================`);
@@ -22,12 +23,21 @@ async function provisionAdmin() {
 
   if (existing) {
     console.log(`User already exists with ID: ${existing.id}, current role: '${existing.role}'`);
-    if (existing.role !== "admin") {
-      console.log(`Promoting to 'admin'...`);
+    await db
+      .update(schema.user)
+      .set({ role: "admin", updatedAt: new Date() })
+      .where(eq(schema.user.id, existing.id));
+
+    // Update password
+    const hashedPassword = await hashPassword(adminPassword);
+    const existingAccount = await db.query.account.findFirst({
+      where: eq(schema.account.userId, existing.id),
+    });
+    if (existingAccount) {
       await db
-        .update(schema.user)
-        .set({ role: "admin", updatedAt: new Date() })
-        .where(eq(schema.user.id, existing.id));
+        .update(schema.account)
+        .set({ password: hashedPassword, updatedAt: new Date() })
+        .where(eq(schema.account.id, existingAccount.id));
     }
   } else {
     console.log(`Creating user through Better Auth...`);

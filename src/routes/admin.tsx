@@ -6,6 +6,7 @@ import {
   FileText,
   Users,
   ShieldCheck,
+  ShieldAlert,
   CheckCircle2,
   Clock,
   AlertCircle,
@@ -20,6 +21,7 @@ import {
   CreditCard,
   MessageSquare,
   Sparkles,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -39,7 +41,7 @@ export function AdminDashboardPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
 
-  // Admin login form
+  // Admin login form (strictly empty for security)
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -70,7 +72,10 @@ export function AdminDashboardPage() {
   const checkAdminAuth = async () => {
     try {
       setAuthLoading(true);
-      const res = await fetch("/api/auth/get-session");
+      const res = await fetch("/api/auth/get-session", {
+        headers: { "Cache-Control": "no-cache" },
+        credentials: "include",
+      });
       const data = await res.json();
       if (data?.user?.role === "admin") {
         setSessionUser(data.user);
@@ -89,7 +94,7 @@ export function AdminDashboardPage() {
 
   const refreshData = async () => {
     // 1. Fetch Orders
-    fetch("/api/admin/orders")
+    fetch("/api/admin/orders", { credentials: "include" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (d?.orders) setOrders(d.orders);
@@ -97,7 +102,7 @@ export function AdminDashboardPage() {
       .catch(() => {});
 
     // 2. Fetch Customers
-    fetch("/api/admin/customers")
+    fetch("/api/admin/customers", { credentials: "include" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (d?.customers) setCustomers(d.customers);
@@ -105,7 +110,7 @@ export function AdminDashboardPage() {
       .catch(() => {});
 
     // 3. Fetch Catalog
-    fetch("/api/catalog")
+    fetch("/api/catalog", { credentials: "include" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (d?.services) setCatalogServices(d.services);
@@ -121,11 +126,17 @@ export function AdminDashboardPage() {
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!loginEmail.trim() || !loginPassword) {
+      toast.error("Please enter both admin email and password.");
+      return;
+    }
+
     setIsLoggingIn(true);
     try {
       const res = await fetch("/api/auth/sign-in/email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           email: loginEmail.trim(),
           password: loginPassword,
@@ -133,14 +144,16 @@ export function AdminDashboardPage() {
       });
       const data = await res.json();
       if (!res.ok || !data.user) {
-        throw new Error(data.message || data.error || "Login failed");
+        throw new Error(data.message || data.error || "Invalid credentials.");
       }
       if (data.user.role !== "admin") {
         throw new Error("Access Denied: This account does not possess administrator privileges.");
       }
-      toast.success("Administrator session verified!");
+      setSessionUser(data.user);
+      setIsAdmin(true);
+      toast.success("Administrator session verified! Welcome Mohammed.");
       setLoginPassword("");
-      checkAdminAuth();
+      refreshData();
     } catch (err: unknown) {
       const error = err as Error;
       toast.error(error.message || "Failed to log in as administrator.");
@@ -220,6 +233,53 @@ export function AdminDashboardPage() {
     }
   };
 
+  const [isDeletingCustomer, setIsDeletingCustomer] = useState<string | null>(null);
+  const [isDeletingOrder, setIsDeletingOrder] = useState<string | null>(null);
+
+  const handleDeleteCustomer = async (customerId: string, customerName: string) => {
+    if (!window.confirm(`Are you sure you want to permanently delete customer "${customerName}" and all associated details and records?`)) {
+      return;
+    }
+    setIsDeletingCustomer(customerId);
+    try {
+      const res = await fetch(`/api/admin/customers/${customerId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete customer");
+      toast.success(data.message || `Customer "${customerName}" deleted successfully!`);
+      refreshData();
+    } catch (err: unknown) {
+      const error = err as Error;
+      toast.error(error.message || "Failed to delete customer.");
+    } finally {
+      setIsDeletingCustomer(null);
+    }
+  };
+
+  const handleDeleteOrder = async (orderId: string) => {
+    if (!window.confirm(`Are you sure you want to permanently delete order ${orderId} and its associated records?`)) {
+      return;
+    }
+    setIsDeletingOrder(orderId);
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete order");
+      toast.success(data.message || `Order ${orderId} deleted successfully!`);
+      refreshData();
+    } catch (err: unknown) {
+      const error = err as Error;
+      toast.error(error.message || "Failed to delete order.");
+    } finally {
+      setIsDeletingOrder(null);
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-[#F4F8FC]/50 flex items-center justify-center py-20">
@@ -232,7 +292,39 @@ export function AdminDashboardPage() {
   }
 
   // ==========================================================================
-  // VIEW A: NOT LOGGED IN AS ADMIN -> RENDER ADMIN LOGIN
+  // VIEW A: LOGGED IN AS CUSTOMER -> ACCESS STRICTLY DISABLED
+  // ==========================================================================
+  if (sessionUser && !isAdmin) {
+    return (
+      <div className="min-h-screen bg-[#F4F8FC]/60 py-16">
+        <div className="mx-auto max-w-md px-4 sm:px-6">
+          <div className="rounded-3xl border border-red-200 bg-white p-8 shadow-md text-center">
+            <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-red-50 text-red-600 border border-red-200 mb-4">
+              <ShieldAlert className="size-7" />
+            </div>
+            <h1 className="text-xl font-extrabold text-[#071C55]">
+              Admin Access Disabled
+            </h1>
+            <p className="mt-2 text-xs text-[#667085] leading-relaxed">
+              You are signed in as <strong>{sessionUser.name}</strong> ({sessionUser.email}) with a <strong>Customer Account</strong>.
+              Customer accounts cannot access the Administrator Control Center.
+            </p>
+            <div className="mt-6 flex flex-col gap-2">
+              <Link
+                to="/"
+                className="w-full rounded-full bg-[#0866D9] py-2.5 text-xs font-bold text-white shadow-md hover:bg-[#071C55] transition-colors"
+              >
+                Return to Marketplace
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ==========================================================================
+  // VIEW B: NOT LOGGED IN AS ADMIN -> RENDER EMPTY ADMIN LOGIN FORM
   // ==========================================================================
   if (!isAdmin) {
     return (
@@ -246,12 +338,22 @@ export function AdminDashboardPage() {
               WebCraftly Control Center
             </h1>
             <p className="mt-2 text-xs text-[#667085]">
-              Please authenticate with your administrator credentials to access orders and the financial ledger.
+              Please authenticate with administrator credentials to access orders and the financial ledger.
             </p>
           </div>
 
           <div className="rounded-3xl border border-gray-200 bg-white p-8 shadow-md">
-            <form onSubmit={handleAdminLogin} className="space-y-4 text-xs">
+            <div className="mb-5 rounded-2xl border border-purple-200 bg-purple-50/70 p-4 text-xs text-[#071C55] flex items-start gap-2.5">
+              <ShieldCheck className="size-4 text-purple-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-purple-950">Administrator Authorization Required</p>
+                <p className="text-[11px] text-[#667085] mt-0.5 leading-relaxed">
+                  Only authorized administrators can access this portal. Customer accounts are prohibited.
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleAdminLogin} autoComplete="off" className="space-y-4 text-xs">
               <div>
                 <label className="block font-bold text-[#071C55] uppercase tracking-wider mb-1.5">
                   Admin Email
@@ -259,6 +361,9 @@ export function AdminDashboardPage() {
                 <input
                   type="email"
                   required
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
                   placeholder="admin@webcraftly.com"
@@ -273,9 +378,10 @@ export function AdminDashboardPage() {
                 <input
                   type="password"
                   required
+                  autoComplete="new-password"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
-                  placeholder="••••••••••••"
+                  placeholder="Enter administrator password"
                   className="w-full rounded-xl border border-gray-200 bg-[#F4F8FC] p-3 text-xs text-[#071C55] focus:border-purple-600 focus:bg-white focus:outline-hidden"
                 />
               </div>
@@ -283,17 +389,17 @@ export function AdminDashboardPage() {
               <button
                 type="submit"
                 disabled={isLoggingIn}
-                className="w-full mt-2 rounded-full bg-purple-700 py-3 text-xs font-bold text-white shadow-md hover:bg-purple-800 transition-colors disabled:opacity-50"
+                className="w-full mt-2 rounded-full bg-purple-700 py-3 text-xs font-bold text-white shadow-md hover:bg-purple-800 transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {isLoggingIn ? "Authenticating..." : "Unlock Admin Dashboard"}
               </button>
             </form>
 
             <div className="mt-6 pt-5 border-t border-gray-100 text-center text-[11px] text-[#667085]">
-              Need to promote your account? Run CLI tool:{" "}
-              <code className="rounded bg-gray-100 px-1.5 py-0.5 text-purple-700 font-mono">
-                npm run admin:promote &lt;email&gt;
-              </code>
+              Return to client marketplace:{" "}
+              <Link to="/" className="text-[#0866D9] font-bold hover:underline">
+                Home
+              </Link>
             </div>
           </div>
         </div>
@@ -511,6 +617,7 @@ export function AdminDashboardPage() {
                       <th className="pb-3 font-bold uppercase">Payment Status</th>
                       <th className="pb-3 font-bold uppercase">Total</th>
                       <th className="pb-3 font-bold uppercase">Order Status</th>
+                      <th className="pb-3 font-bold uppercase text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -529,6 +636,18 @@ export function AdminDashboardPage() {
                           <span className="rounded-full bg-blue-50 px-2.5 py-0.5 font-bold text-[#0866D9]">
                             {o.status}
                           </span>
+                        </td>
+                        <td className="py-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteOrder(o.id)}
+                            disabled={isDeletingOrder === o.id}
+                            className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 px-2.5 py-1 text-[11px] font-bold transition-colors cursor-pointer disabled:opacity-50"
+                            title={`Delete order ${o.id}`}
+                          >
+                            <Trash2 className="size-3" />
+                            {isDeletingOrder === o.id ? "Deleting..." : "Delete"}
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -622,9 +741,21 @@ export function AdminDashboardPage() {
                           setActivePaymentOrder(order);
                           setPayAmount("");
                         }}
-                        className="flex items-center gap-1 rounded-xl bg-[#0866D9] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[#071C55] transition-colors"
+                        className="flex items-center gap-1 rounded-xl bg-[#0866D9] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[#071C55] transition-colors cursor-pointer"
                       >
                         <DollarSign className="size-3.5" /> Record Payment
+                      </button>
+
+                      {/* Delete Order Button */}
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteOrder(order.id)}
+                        disabled={isDeletingOrder === order.id}
+                        className="flex items-center gap-1 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer disabled:opacity-50"
+                        title={`Delete order ${order.id}`}
+                      >
+                        <Trash2 className="size-3.5" />
+                        {isDeletingOrder === order.id ? "Deleting..." : "Delete Order"}
                       </button>
                     </div>
                   </div>
@@ -695,6 +826,7 @@ export function AdminDashboardPage() {
                     <th className="pb-3 font-bold uppercase">Orders</th>
                     <th className="pb-3 font-bold uppercase">Verified Spend</th>
                     <th className="pb-3 font-bold uppercase">Outstanding</th>
+                    <th className="pb-3 font-bold uppercase text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -723,6 +855,18 @@ export function AdminDashboardPage() {
                       <td className="py-3 font-bold text-[#071C55]">{c.totalOrders}</td>
                       <td className="py-3 font-bold text-emerald-700">{formatINR(c.totalSpent || 0)}</td>
                       <td className="py-3 font-bold text-[#071C55]">{formatINR(c.outstandingBalance || 0)}</td>
+                      <td className="py-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCustomer(c.id, c.name)}
+                          disabled={isDeletingCustomer === c.id}
+                          className="inline-flex items-center gap-1 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer disabled:opacity-50"
+                          title={`Delete customer details for ${c.name}`}
+                        >
+                          <Trash2 className="size-3.5" />
+                          {isDeletingCustomer === c.id ? "Deleting..." : "Delete Details"}
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

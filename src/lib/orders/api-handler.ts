@@ -12,6 +12,8 @@ import {
   recordOrderPayment,
   getCatalogFromDb,
   getAdminCustomers,
+  deleteCustomer,
+  deleteOrder,
 } from "./index.ts";
 
 function jsonResponse(data: unknown, status = 200) {
@@ -118,6 +120,22 @@ export async function handleOrderApiRequest(request: Request, url: URL): Promise
       const body = await request.json();
       const result = await recordOrderPayment(request, orderId, body);
       return jsonResponse(result, 201);
+    }
+
+    // 8. Admin: Delete Customer & Details
+    const customerDeleteMatch = pathname.match(/^\/api\/admin\/customers\/([A-Za-z0-9_-]+)$/);
+    if (customerDeleteMatch && method === "DELETE") {
+      const customerId = customerDeleteMatch[1]!;
+      const result = await deleteCustomer(request, customerId);
+      return jsonResponse(result, 200);
+    }
+
+    // 9. Admin: Delete Order
+    const orderDeleteMatch = pathname.match(/^\/api\/admin\/orders\/([A-Za-z0-9_-]+)$/);
+    if (orderDeleteMatch && method === "DELETE") {
+      const orderId = orderDeleteMatch[1]!;
+      const result = await deleteOrder(request, orderId);
+      return jsonResponse(result, 200);
     }
 
     return null;

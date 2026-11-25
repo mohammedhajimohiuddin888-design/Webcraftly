@@ -11,7 +11,8 @@ import {
   Building,
   Calendar,
   DollarSign,
-  FileText
+  FileText,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -38,10 +39,18 @@ function CustomQuotePage() {
   const [submittedInquiry, setSubmittedInquiry] = useState<CustomQuoteInquiry | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const isPhoneInvalid =
+    phone.trim().length > 0 &&
+    (/[a-zA-Z]/.test(phone) || !/^[\d+\s\-()]+$/.test(phone));
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName.trim() || !email.trim() || !phone.trim() || !projectDescription.trim()) {
       toast.error("Please fill in all required fields.");
+      return;
+    }
+    if (isPhoneInvalid || phone.replace(/\D/g, "").length < 10) {
+      toast.error("Please enter a valid phone number containing numbers only (min. 10 digits).");
       return;
     }
 
@@ -181,8 +190,13 @@ function CustomQuotePage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                     <div>
-                      <label className="block text-xs font-bold text-[#071C55] uppercase tracking-wider mb-1.5">
-                        Phone Number / WhatsApp *
+                      <label className="block text-xs font-bold text-[#071C55] uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                        <span>Phone Number / WhatsApp *</span>
+                        {isPhoneInvalid && (
+                          <span className="text-red-600 font-bold text-[11px] normal-case tracking-normal flex items-center gap-1">
+                            <AlertCircle className="size-3" /> Numbers only
+                          </span>
+                        )}
                       </label>
                       <input
                         type="tel"
@@ -190,8 +204,18 @@ function CustomQuotePage() {
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         placeholder="e.g. +91 96188 90557"
-                        className="w-full rounded-xl border border-gray-200 bg-[#F4F8FC] p-3 text-xs text-[#071C55] focus:border-[#0866D9] focus:bg-white focus:outline-hidden"
+                        className={`w-full rounded-xl border p-3 text-xs transition-all focus:outline-hidden ${
+                          isPhoneInvalid
+                            ? "border-red-500 bg-red-50 text-red-900 focus:border-red-600 focus:ring-2 focus:ring-red-200"
+                            : "border-gray-200 bg-[#F4F8FC] text-[#071C55] focus:border-[#0866D9] focus:bg-white"
+                        }`}
                       />
+                      {isPhoneInvalid && (
+                        <p className="mt-1.5 flex items-center gap-1 text-[11px] font-bold text-red-600">
+                          <AlertCircle className="size-3.5 shrink-0" />
+                          Invalid phone number: Please enter numbers only (e.g. +91 96188 90557).
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-[#071C55] uppercase tracking-wider mb-1.5">

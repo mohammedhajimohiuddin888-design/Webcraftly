@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import {
   ArrowRight,
+  AlertCircle,
   CheckCircle2,
   Clock,
   CreditCard,
@@ -25,6 +26,7 @@ import {
   type CartItem,
   type Order
 } from "@/lib/webcraftly";
+import { useAuthModal } from "@/components/webcraftly/auth-context";
 
 export const Route = createFileRoute("/checkout")({
   component: CheckoutPage,
@@ -32,6 +34,7 @@ export const Route = createFileRoute("/checkout")({
 
 function CheckoutPage() {
   const navigate = useNavigate();
+  const { sessionUser, openLoginModal } = useAuthModal();
   const [items, setItems] = useState<CartItem[]>([]);
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
 
@@ -61,29 +64,49 @@ function CheckoutPage() {
       const cart = parseCart(window.localStorage.getItem(cartStorageKey));
       setItems(cart);
     }
-
-    // Pre-fill user profile if logged in
-    fetch("/api/auth/get-session")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data?.user) {
-          if (data.user.name) setFullName(data.user.name);
-          if (data.user.email) setEmail(data.user.email);
-          if (data.user.phone) setPhone(data.user.phone);
-          if (data.user.businessName) setBusinessName(data.user.businessName);
-        }
-      })
-      .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (sessionUser) {
+      if (!fullName && sessionUser.name) setFullName(sessionUser.name);
+      if (!email && sessionUser.email) setEmail(sessionUser.email);
+      if (!phone && sessionUser.phone) setPhone(sessionUser.phone);
+      if (!businessName && sessionUser.businessName) setBusinessName(sessionUser.businessName);
+    }
+  }, [sessionUser]);
 
   const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
   const finalTotal = subtotal;
+
+  // Real-time phone validation: flags letters or non-numeric characters in red
+  const isPhoneInvalid =
+    phone.trim().length > 0 &&
+    (/[a-zA-Z]/.test(phone) || !/^[\d+\s\-()]+$/.test(phone));
 
   // Validation before advancing steps
   const handleNextFromStep1 = (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName.trim() || !email.trim() || !phone.trim()) {
       toast.error("Please fill in your name, email, and phone number.");
+      return;
+    }
+    if (isPhoneInvalid || phone.replace(/\D/g, "").length < 10) {
+      toast.error("Please enter a valid phone number containing numbers only (min. 10 digits).");
+      return;
+    }
+    if (!sessionUser) {
+      toast.info("Please log in or create an account to proceed with your order.");
+      openLoginModal({
+        mode: "signin",
+        role: "customer",
+        onLoginSuccess: (user) => {
+          if (user.name) setFullName(user.name);
+          if (user.email) setEmail(user.email);
+          if (user.phone) setPhone(user.phone);
+          if (user.businessName) setBusinessName(user.businessName);
+          setStep(2);
+        },
+      });
       return;
     }
     setStep(2);
@@ -99,12 +122,28 @@ function CheckoutPage() {
   };
 
   const handleCompleteOrder = async () => {
+    if (!sessionUser) {
+      toast.error("Login Required: You must log in to your account to place an order.");
+      openLoginModal({
+        mode: "signin",
+        role: "customer",
+        onLoginSuccess: (user) => {
+          if (user.name) setFullName(user.name);
+          if (user.email) setEmail(user.email);
+          if (user.phone) setPhone(user.phone);
+          if (user.businessName) setBusinessName(user.businessName);
+        },
+      });
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           customerName: fullName.trim(),
           customerEmail: email.trim(),
@@ -219,7 +258,51 @@ function CheckoutPage() {
               We use these details for your project deliverables, updates, and invoice.
             </p>
 
-            <form onSubmit={handleNextFromStep1} className="space-y-4">
+            {sessionUser ? (
+              <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-3.5 text-xs text-[#071C55] flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
+                  <span>
+                    Signed in as <strong className="text-[#071C55]">{sessionUser.name}</strong> ({sessionUser.email})
+                  </span>
+                </div>
+                <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
+                  Verified Account
+                </span>
+              </div>
+            ) : (
+              <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-xs text-[#071C55] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-start gap-2.5">
+                  <Lock className="size-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-[#071C55]">Customer Login Required</p>
+                    <p className="text-[11px] text-[#667085] mt-0.5">
+                      Please log in or register so your order and verified payment records are linked to your account.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    openLoginModal({
+                      mode: "signin",
+                      role: "customer",
+                      onLoginSuccess: (user) => {
+                        if (user.name) setFullName(user.name);
+                        if (user.email) setEmail(user.email);
+                        if (user.phone) setPhone(user.phone);
+                        if (user.businessName) setBusinessName(user.businessName);
+                      },
+                    })
+                  }
+                  className="rounded-full bg-[#0866D9] px-4 py-2 text-xs font-bold text-white hover:bg-[#071C55] transition-colors shrink-0 shadow-xs cursor-pointer"
+                >
+                  Log In / Register (Popup)
+                </button>
+              </div>
+            )}
+
+            <form onSubmit={handleNextFromStep1} autoComplete="off" className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-[#071C55] uppercase tracking-wider mb-1.5">
                   Full Name *
@@ -227,9 +310,10 @@ function CheckoutPage() {
                 <input
                   type="text"
                   required
+                  autoComplete="off"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="e.g. Rahul Sharma"
+                  placeholder="Enter your full name"
                   className="w-full rounded-xl border border-gray-200 bg-[#F4F8FC] p-3 text-xs text-[#071C55] focus:border-[#0866D9] focus:bg-white focus:outline-hidden"
                 />
               </div>
@@ -242,15 +326,23 @@ function CheckoutPage() {
                   <input
                     type="email"
                     required
+                    autoComplete="off"
+                    autoCapitalize="none"
+                    spellCheck={false}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="e.g. rahul@company.com"
+                    placeholder="Enter your email address"
                     className="w-full rounded-xl border border-gray-200 bg-[#F4F8FC] p-3 text-xs text-[#071C55] focus:border-[#0866D9] focus:bg-white focus:outline-hidden"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[#071C55] uppercase tracking-wider mb-1.5">
-                    Phone / WhatsApp *
+                  <label className="block text-xs font-bold text-[#071C55] uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                    <span>Phone / WhatsApp *</span>
+                    {isPhoneInvalid && (
+                      <span className="text-red-600 font-bold text-[11px] normal-case tracking-normal flex items-center gap-1">
+                        <AlertCircle className="size-3" /> Numbers only
+                      </span>
+                    )}
                   </label>
                   <input
                     type="tel"
@@ -258,8 +350,18 @@ function CheckoutPage() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="e.g. +91 98765 43210"
-                    className="w-full rounded-xl border border-gray-200 bg-[#F4F8FC] p-3 text-xs text-[#071C55] focus:border-[#0866D9] focus:bg-white focus:outline-hidden"
+                    className={`w-full rounded-xl border p-3 text-xs transition-all focus:outline-hidden ${
+                      isPhoneInvalid
+                        ? "border-red-500 bg-red-50 text-red-900 focus:border-red-600 focus:ring-2 focus:ring-red-200"
+                        : "border-gray-200 bg-[#F4F8FC] text-[#071C55] focus:border-[#0866D9] focus:bg-white"
+                    }`}
                   />
+                  {isPhoneInvalid && (
+                    <p className="mt-1.5 flex items-center gap-1 text-[11px] font-bold text-red-600">
+                      <AlertCircle className="size-3.5 shrink-0" />
+                      Invalid phone number: Please enter numbers only (e.g. +91 98765 43210).
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -532,7 +634,11 @@ function CheckoutPage() {
                 className="flex items-center gap-2 rounded-full bg-emerald-600 px-8 py-3.5 text-xs font-black text-white shadow-lg shadow-emerald-600/25 hover:bg-emerald-700 hover:shadow-emerald-600/40 hover:-translate-y-0.5 transition-all disabled:opacity-50"
               >
                 <MessageSquare className="size-4" />
-                {isProcessing ? "Saving Order..." : `Order via WhatsApp (${formatINR(finalTotal)})`}
+                {isProcessing
+                  ? "Saving Order..."
+                  : !sessionUser
+                  ? `Log In to Place Order (${formatINR(finalTotal)})`
+                  : `Order via WhatsApp (${formatINR(finalTotal)})`}
               </button>
             </div>
           </div>

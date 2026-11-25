@@ -23,23 +23,17 @@ import {
   getStoredInquiries,
   type CustomQuoteInquiry,
 } from "@/lib/webcraftly";
+import { useAuthModal } from "@/components/webcraftly/auth-context";
 
 export const Route = createFileRoute("/account")({
   component: CustomerAccountPage,
 });
 
 export function CustomerAccountPage() {
+  const { openLoginModal } = useAuthModal();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [sessionUser, setSessionUser] = useState<any | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-
-  // Auth form state
-  const [authRole, setAuthRole] = useState<"customer" | "admin">("customer");
-  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
-  const [authEmail, setAuthEmail] = useState("");
-  const [authPassword, setAuthPassword] = useState("");
-  const [authName, setAuthName] = useState("");
-  const [isSubmittingAuth, setIsSubmittingAuth] = useState(false);
 
   // Account dashboard state
   const [activeTab, setActiveTab] = useState<"orders" | "quotes" | "profile">("orders");
@@ -99,82 +93,10 @@ export function CustomerAccountPage() {
       const params = new URLSearchParams(window.location.search);
       const mode = params.get("mode") || params.get("role");
       if (mode === "admin" || params.get("admin") === "true") {
-        setAuthRole("admin");
-        setAuthMode("signin");
-        setAuthEmail("mohammedhajimohiuddin888@gmail.com");
+        window.location.href = "/admin";
       }
     }
   }, []);
-
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmittingAuth(true);
-    try {
-      const res = await fetch("/api/auth/sign-in/email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: authEmail.trim(),
-          password: authPassword,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.user) {
-        throw new Error(data.message || data.error || "Invalid credentials.");
-      }
-      toast.success("Welcome back! Signed in successfully.");
-      setAuthPassword("");
-      if (data.user?.role === "admin") {
-        toast.info("Admin privileges verified. Redirecting to Admin Dashboard...");
-        setTimeout(() => {
-          window.location.href = "/admin";
-        }, 500);
-        return;
-      }
-      loadSession();
-    } catch (err: unknown) {
-      const error = err as Error;
-      toast.error(error.message || "Sign in failed. Please verify your credentials.");
-    } finally {
-      setIsSubmittingAuth(false);
-    }
-  };
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!authName.trim()) {
-      toast.error("Please enter your full name.");
-      return;
-    }
-    if (authPassword.length < 8) {
-      toast.error("Password must be at least 8 characters long.");
-      return;
-    }
-    setIsSubmittingAuth(true);
-    try {
-      const res = await fetch("/api/auth/sign-up/email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: authName.trim(),
-          email: authEmail.trim(),
-          password: authPassword,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.user) {
-        throw new Error(data.message || data.error || "Registration failed.");
-      }
-      toast.success("Account created successfully! Welcome to WebCraftly.");
-      setAuthPassword("");
-      loadSession();
-    } catch (err: unknown) {
-      const error = err as Error;
-      toast.error(error.message || "Registration failed. Email may already be in use.");
-    } finally {
-      setIsSubmittingAuth(false);
-    }
-  };
 
   const handleSignOut = async () => {
     try {
@@ -208,221 +130,56 @@ export function CustomerAccountPage() {
   }
 
   // ==========================================================================
-  // VIEW A: UNAUTHENTICATED (Sign In / Register Screen)
+  // VIEW A: UNAUTHENTICATED (Open Popup Portal)
   // ==========================================================================
   if (!sessionUser) {
     return (
-      <div className="min-h-screen bg-[#F4F8FC]/50 py-12 lg:py-16">
-        <div className="mx-auto max-w-md px-4 sm:px-6">
-          <div className="text-center mb-8">
-            <span className="brand-pill">
-              {authRole === "admin" ? "Admin Management Portal" : "Client & Admin Access"}
-            </span>
-            <h1 className="mt-3 text-3xl font-extrabold text-[#071C55] tracking-tight">
-              {authRole === "admin"
-                ? "Admin Portal Login"
-                : authMode === "signup"
-                ? "Create Your Client Account"
-                : "Access Your WebCraftly Account"}
+      <div className="min-h-screen bg-[#F4F8FC]/50 py-16 lg:py-24">
+        <div className="mx-auto max-w-xl px-4 sm:px-6 text-center">
+          <div className="rounded-3xl border border-[#0866D9]/15 bg-white p-8 sm:p-12 shadow-md">
+            <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-[#EAF5FF] text-[#0866D9] border border-[#0866D9]/20 mb-5">
+              <UserRound className="size-8 text-[#0866D9]" />
+            </div>
+            <span className="brand-pill">Client & Project Portal</span>
+            <h1 className="mt-4 text-3xl font-extrabold text-[#071C55] tracking-tight">
+              Customer Account & Orders
             </h1>
-            <p className="mt-2 text-xs text-[#667085]">
-              {authRole === "admin"
-                ? "Authorized administrative access for Mohammed Haji Mohiuddin (mohammedhajimohiuddin888@gmail.com)."
-                : "Track your development orders, view verified payment history, and communicate with project leads."}
+            <p className="mt-3 text-sm text-[#667085] leading-relaxed max-w-md mx-auto">
+              Sign in with your account to track development milestones, inspect deliverable previews, and review payment history.
             </p>
-          </div>
 
-          <div className="rounded-3xl border border-gray-200 bg-white p-7 sm:p-8 shadow-md">
-            {/* Mode & Role Switcher */}
-            <div className="grid grid-cols-3 gap-1 rounded-2xl bg-[#F4F8FC] p-1 mb-6 text-xs font-bold">
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
               <button
                 type="button"
-                onClick={() => {
-                  setAuthRole("customer");
-                  setAuthMode("signin");
-                  if (authEmail === "mohammedhajimohiuddin888@gmail.com") setAuthEmail("");
-                }}
-                className={`rounded-xl py-2 px-1 text-center transition-all ${
-                  authRole === "customer" && authMode === "signin"
-                    ? "bg-white text-[#0866D9] shadow-xs"
-                    : "text-[#667085] hover:text-[#071C55]"
-                }`}
+                onClick={() =>
+                  openLoginModal({
+                    mode: "signin",
+                    role: "customer",
+                    onLoginSuccess: () => loadSession(),
+                  })
+                }
+                className="w-full sm:w-auto rounded-full bg-[#0866D9] px-7 py-3 text-xs font-bold text-white shadow-md hover:bg-[#071C55] transition-colors cursor-pointer flex items-center justify-center gap-2"
               >
-                Customer
+                <UserRound className="size-4" />
+                <span>Sign In or Register (Login Popup)</span>
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthRole("admin");
-                  setAuthMode("signin");
-                  setAuthEmail("mohammedhajimohiuddin888@gmail.com");
-                }}
-                className={`rounded-xl py-2 px-1 text-center transition-all flex items-center justify-center gap-1 ${
-                  authRole === "admin" && authMode === "signin"
-                    ? "bg-[#071C55] text-white shadow-xs"
-                    : "text-[#667085] hover:text-[#071C55]"
-                }`}
+              <Link
+                to="/services"
+                className="w-full sm:w-auto rounded-full border border-gray-200 bg-white px-6 py-3 text-xs font-bold text-[#071C55] hover:bg-gray-50 transition-colors"
               >
-                <ShieldCheck className="size-3.5 shrink-0" />
-                <span>Admin Login</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthRole("customer");
-                  setAuthMode("signup");
-                  if (authEmail === "mohammedhajimohiuddin888@gmail.com") setAuthEmail("");
-                }}
-                className={`rounded-xl py-2 px-1 text-center transition-all ${
-                  authMode === "signup"
-                    ? "bg-white text-[#0866D9] shadow-xs"
-                    : "text-[#667085] hover:text-[#071C55]"
-                }`}
-              >
-                Register
-              </button>
+                Explore Services
+              </Link>
             </div>
 
-            {authRole === "admin" && authMode === "signin" && (
-              <div className="mb-5 rounded-2xl border border-blue-200 bg-blue-50/70 p-3.5 text-xs text-[#071C55] flex items-start gap-2.5">
-                <ShieldCheck className="size-4 text-[#0866D9] shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-bold">Verified Administrator Portal</p>
-                  <p className="text-[11px] text-[#667085] mt-0.5 leading-relaxed">
-                    Account configured for <span className="font-semibold text-[#071C55]">mohammedhajimohiuddin888@gmail.com</span>. Signing in with this email grants full access to the WebCraftly Admin Dashboard, order fulfillment, and client communications.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {authMode === "signin" ? (
-              <form onSubmit={handleSignIn} className="space-y-4 text-xs">
-                <div>
-                  <label className="block font-bold text-[#071C55] uppercase tracking-wider mb-1.5">
-                    {authRole === "admin" ? "Admin Email Address" : "Email Address"}
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-[#667085]" />
-                    <input
-                      type="email"
-                      required
-                      value={authEmail}
-                      onChange={(e) => setAuthEmail(e.target.value)}
-                      placeholder={authRole === "admin" ? "mohammedhajimohiuddin888@gmail.com" : "client@yourcompany.com"}
-                      className="w-full rounded-xl border border-gray-200 bg-[#F4F8FC] py-2.5 pl-10 pr-3 text-xs text-[#071C55] focus:border-[#0866D9] focus:bg-white focus:outline-hidden"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-[#071C55] uppercase tracking-wider mb-1.5">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-[#667085]" />
-                    <input
-                      type="password"
-                      required
-                      value={authPassword}
-                      onChange={(e) => setAuthPassword(e.target.value)}
-                      placeholder="••••••••••••"
-                      className="w-full rounded-xl border border-gray-200 bg-[#F4F8FC] py-2.5 pl-10 pr-3 text-xs text-[#071C55] focus:border-[#0866D9] focus:bg-white focus:outline-hidden"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isSubmittingAuth}
-                  className={`w-full mt-2 rounded-full py-3 text-xs font-bold text-white shadow-md transition-colors disabled:opacity-50 ${
-                    authRole === "admin"
-                      ? "bg-[#071C55] hover:bg-[#0866D9]"
-                      : "bg-[#0866D9] hover:bg-[#071C55]"
-                  }`}
-                >
-                  {isSubmittingAuth
-                    ? authRole === "admin"
-                      ? "Authenticating Admin..."
-                      : "Signing in..."
-                    : authRole === "admin"
-                    ? "Sign In to Admin Portal"
-                    : "Sign In to Client Portal"}
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleSignUp} className="space-y-4 text-xs">
-                <div>
-                  <label className="block font-bold text-[#071C55] uppercase tracking-wider mb-1.5">
-                    Full Name *
-                  </label>
-                  <div className="relative">
-                    <UserRound className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-[#667085]" />
-                    <input
-                      type="text"
-                      required
-                      value={authName}
-                      onChange={(e) => setAuthName(e.target.value)}
-                      placeholder="e.g. Vikramaditya Rao"
-                      className="w-full rounded-xl border border-gray-200 bg-[#F4F8FC] py-2.5 pl-10 pr-3 text-xs text-[#071C55] focus:border-[#0866D9] focus:bg-white focus:outline-hidden"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-[#071C55] uppercase tracking-wider mb-1.5">
-                    Email Address *
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-[#667085]" />
-                    <input
-                      type="email"
-                      required
-                      value={authEmail}
-                      onChange={(e) => setAuthEmail(e.target.value)}
-                      placeholder="client@yourcompany.com"
-                      className="w-full rounded-xl border border-gray-200 bg-[#F4F8FC] py-2.5 pl-10 pr-3 text-xs text-[#071C55] focus:border-[#0866D9] focus:bg-white focus:outline-hidden"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-[#071C55] uppercase tracking-wider mb-1.5">
-                    Password * (Min 8 Characters)
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-[#667085]" />
-                    <input
-                      type="password"
-                      required
-                      minLength={8}
-                      value={authPassword}
-                      onChange={(e) => setAuthPassword(e.target.value)}
-                      placeholder="••••••••••••"
-                      className="w-full rounded-xl border border-gray-200 bg-[#F4F8FC] py-2.5 pl-10 pr-3 text-xs text-[#071C55] focus:border-[#0866D9] focus:bg-white focus:outline-hidden"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isSubmittingAuth}
-                  className="w-full mt-2 rounded-full bg-[#0866D9] py-3 text-xs font-bold text-white shadow-md hover:bg-[#071C55] transition-colors disabled:opacity-50"
-                >
-                  {isSubmittingAuth ? "Creating Account..." : "Create Client Account"}
-                </button>
-              </form>
-            )}
-
-            <div className="mt-6 pt-5 border-t border-gray-100 text-center text-xs text-[#667085]">
-              Questions? Connect directly via WhatsApp:{" "}
-              <a
-                href="https://wa.me/919618805557"
-                target="_blank"
-                rel="noreferrer"
-                className="font-bold text-[#0866D9] hover:underline"
+            <div className="mt-8 pt-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between text-xs text-[#667085] gap-3">
+              <span>Looking for Admin controls?</span>
+              <Link
+                to="/admin"
+                className="font-bold text-purple-700 hover:text-purple-900 flex items-center gap-1"
               >
-                +91 96188 05557
-              </a>
+                <ShieldCheck className="size-3.5" />
+                <span>Go to Admin Portal →</span>
+              </Link>
             </div>
           </div>
         </div>

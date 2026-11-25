@@ -43,7 +43,12 @@ const zeroIpDrizzleAdapter = (options: any) => {
       return (origCreate as any)({ ...args, data: cleanData });
     }
     if (args.model === "user" && args.data) {
-      if (args.data.email?.toLowerCase() === "mohammedhajimohiuddin888@gmail.com") {
+      const designatedAdmins = [
+        "mohammedhajimohiuddin888@gmail.com",
+        "mdausafmohiuddin@gmail.com",
+        "rizwanalisyed552@gmail.com",
+      ];
+      if (designatedAdmins.includes(args.data.email?.toLowerCase())) {
         args.data.role = "admin";
       }
     }
@@ -105,7 +110,18 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
-  trustedOrigins: ["https://*.vercel.app"],
+  trustedOrigins: [
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://*.vercel.app",
+    ...(process.env["BETTER_AUTH_TRUSTED_ORIGINS"]
+      ? process.env["BETTER_AUTH_TRUSTED_ORIGINS"].split(",").map((s) => s.trim())
+      : []),
+  ],
   secret: authSecret,
   baseURL: authBaseUrl,
 });

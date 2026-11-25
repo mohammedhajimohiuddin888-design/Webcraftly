@@ -14,6 +14,8 @@ import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteHeader, SiteFooter } from "../components/webcraftly/site-shell";
+import { AuthProvider } from "../components/webcraftly/auth-context";
+import { AuthModal } from "../components/webcraftly/auth-modal";
 
 function NotFoundComponent() {
   return (
@@ -139,14 +141,17 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="flex min-h-screen flex-col bg-white">
-        <SiteHeader />
-        <main className="flex-1">
-          <Outlet />
-        </main>
-        <SiteFooter />
-      </div>
-      <Toaster richColors position="top-right" closeButton />
+      <AuthProvider>
+        <div className="flex min-h-screen flex-col bg-white">
+          <SiteHeader />
+          <main className="flex-1">
+            <Outlet />
+          </main>
+          <SiteFooter />
+        </div>
+        <AuthModal />
+        <Toaster richColors position="top-right" closeButton />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

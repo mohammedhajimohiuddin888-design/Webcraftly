@@ -20,7 +20,9 @@ import {
   FileText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { cartStorageKey, parseCart, services, formatINR } from "@/lib/webcraftly";
+import { useAuthModal } from "./auth-context";
 
 const navigation = [
   { label: "Home", to: "/" },
@@ -43,6 +45,7 @@ export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const { sessionUser, openLoginModal } = useAuthModal();
 
   useEffect(() => {
     const updateCount = () => {
@@ -96,13 +99,34 @@ export function SiteHeader() {
               Track Order
             </Link>
             <span className="text-[#0866D9]/30">|</span>
-            <Link to="/account" className="text-[#071C55] hover:text-[#0866D9] font-bold">
-              Customer Login
-            </Link>
+            {sessionUser ? (
+              <Link to="/account" className="text-[#071C55] hover:text-[#0866D9] font-bold">
+                My Account ({sessionUser.name.split(" ")[0]})
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => openLoginModal({ mode: "signin", role: "customer" })}
+                className="text-[#071C55] hover:text-[#0866D9] font-bold cursor-pointer"
+              >
+                Customer Login
+              </button>
+            )}
             <span className="text-[#0866D9]/30">|</span>
-            <Link to="/account" className="text-purple-700 hover:text-purple-900 font-bold flex items-center gap-1">
-              <ShieldCheck className="size-3 text-purple-600" /> Admin Login
-            </Link>
+            {sessionUser && sessionUser.role !== "admin" ? (
+              <span
+                style={{ cursor: "not-allowed" }}
+                className="text-gray-400 font-bold flex items-center gap-1 cursor-not-allowed opacity-40 select-none"
+                title="Admin access is disabled for customer accounts"
+                onClick={() => toast.error("Admin Login is disabled for customer accounts.")}
+              >
+                <ShieldCheck className="size-3 text-gray-400" /> Admin Login
+              </span>
+            ) : (
+              <Link to="/admin" className="text-purple-700 hover:text-purple-900 font-bold flex items-center gap-1">
+                <ShieldCheck className="size-3 text-purple-600" /> Admin Login
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -155,19 +179,41 @@ export function SiteHeader() {
 
           <div className="h-4 w-px bg-gray-300 mx-0.5" />
 
-          {/* New Section for Customer Login and Admin Login beside Contact */}
-          <Link
-            to="/account"
-            className="px-3 py-1.5 rounded-full text-xs font-bold text-[#071C55] hover:text-[#0866D9] hover:bg-white transition-all flex items-center gap-1.5"
-          >
-            <UserRound className="size-3.5 text-[#0866D9]" /> Customer Login
-          </Link>
-          <Link
-            to="/account"
-            className="px-3 py-1.5 rounded-full text-xs font-bold text-purple-950 bg-purple-50/90 hover:bg-purple-100 hover:text-purple-950 transition-all flex items-center gap-1.5 border border-purple-200/70"
-          >
-            <ShieldCheck className="size-3.5 text-purple-600" /> Admin Login
-          </Link>
+          {/* Customer Login / Account and Admin Login beside Contact */}
+          {sessionUser ? (
+            <Link
+              to="/account"
+              className="px-3 py-1.5 rounded-full text-xs font-bold text-[#0866D9] bg-[#EAF5FF] hover:bg-blue-100 transition-all flex items-center gap-1.5"
+            >
+              <UserRound className="size-3.5 text-[#0866D9]" /> My Account
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => openLoginModal({ mode: "signin", role: "customer" })}
+              className="px-3 py-1.5 rounded-full text-xs font-bold text-[#071C55] hover:text-[#0866D9] hover:bg-white transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <UserRound className="size-3.5 text-[#0866D9]" /> Customer Login
+            </button>
+          )}
+          {sessionUser && sessionUser.role !== "admin" ? (
+            <button
+              type="button"
+              style={{ cursor: "not-allowed" }}
+              className="px-3 py-1.5 rounded-full text-xs font-bold text-gray-400 bg-gray-100/80 flex items-center gap-1.5 border border-gray-200 cursor-not-allowed opacity-50 select-none"
+              title="Admin access is disabled for customer accounts"
+              onClick={() => toast.error("Admin Login is disabled for customer accounts.")}
+            >
+              <ShieldCheck className="size-3.5 text-gray-400" /> Admin Login
+            </button>
+          ) : (
+            <Link
+              to="/admin"
+              className="px-3 py-1.5 rounded-full text-xs font-bold text-purple-950 bg-purple-50/90 hover:bg-purple-100 hover:text-purple-950 transition-all flex items-center gap-1.5 border border-purple-200/70"
+            >
+              <ShieldCheck className="size-3.5 text-purple-600" /> Admin Login
+            </Link>
+          )}
         </nav>
 
         {/* Right CTA & Action Icons */}
@@ -181,14 +227,27 @@ export function SiteHeader() {
             {searchOpen ? <X className="size-4.5" /> : <Search className="size-4.5" />}
           </button>
 
-          {/* Account Icon */}
-          <Link
-            to="/account"
-            aria-label="Customer Account"
-            className="rounded-full p-2 text-[#071C55] bg-white/70 border border-[#0866D9]/15 hover:bg-white hover:text-[#0866D9] transition-all shadow-2xs"
-          >
-            <UserRound className="size-4.5" />
-          </Link>
+          {/* Account Icon: if logged in -> account page; if not -> open login modal */}
+          {sessionUser ? (
+            <Link
+              to="/account"
+              aria-label="Customer Account"
+              className="rounded-full p-2 text-[#0866D9] bg-[#EAF5FF] border border-[#0866D9]/30 hover:bg-blue-100 transition-all shadow-2xs"
+              title={`Logged in as ${sessionUser.name}`}
+            >
+              <UserRound className="size-4.5" />
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => openLoginModal({ mode: "signin", role: "customer" })}
+              aria-label="Customer Login"
+              className="rounded-full p-2 text-[#071C55] bg-white/70 border border-[#0866D9]/15 hover:bg-white hover:text-[#0866D9] transition-all shadow-2xs cursor-pointer"
+              title="Open Customer Login"
+            >
+              <UserRound className="size-4.5" />
+            </button>
+          )}
 
           {/* Shopping Cart Icon with Live Badge */}
           <Link
@@ -300,18 +359,34 @@ export function SiteHeader() {
               <span className="px-3 text-[10px] font-extrabold uppercase tracking-wider text-[#667085]">
                 Account & Portals
               </span>
+              {sessionUser ? (
+                <Link
+                  to="/account"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center justify-between rounded-xl px-4 py-2.5 text-xs font-bold text-[#0866D9] bg-[#EAF5FF] border border-[#0866D9]/30"
+                >
+                  <span className="flex items-center gap-2">
+                    <UserRound className="size-4 text-[#0866D9]" /> My Account ({sessionUser.name})
+                  </span>
+                  <ChevronRight className="size-3.5 text-[#0866D9]" />
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    openLoginModal({ mode: "signin", role: "customer" });
+                  }}
+                  className="flex items-center justify-between rounded-xl px-4 py-2.5 text-xs font-bold text-[#071C55] bg-white border border-[#0866D9]/15 hover:border-[#0866D9] cursor-pointer text-left w-full"
+                >
+                  <span className="flex items-center gap-2">
+                    <UserRound className="size-4 text-[#0866D9]" /> Customer Login (Popup)
+                  </span>
+                  <ChevronRight className="size-3.5 text-[#667085]" />
+                </button>
+              )}
               <Link
-                to="/account"
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center justify-between rounded-xl px-4 py-2.5 text-xs font-bold text-[#071C55] bg-white border border-[#0866D9]/15 hover:border-[#0866D9]"
-              >
-                <span className="flex items-center gap-2">
-                  <UserRound className="size-4 text-[#0866D9]" /> Customer Login
-                </span>
-                <ChevronRight className="size-3.5 text-[#667085]" />
-              </Link>
-              <Link
-                to="/account"
+                to="/admin"
                 onClick={() => setMenuOpen(false)}
                 className="flex items-center justify-between rounded-xl px-4 py-2.5 text-xs font-bold text-purple-900 bg-purple-50 border border-purple-200 hover:border-purple-400"
               >

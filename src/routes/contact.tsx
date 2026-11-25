@@ -13,15 +13,18 @@ import {
   UserRound,
   ArrowRight,
   Lock,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { saveInquiry, type CustomQuoteInquiry } from "@/lib/webcraftly";
+import { useAuthModal } from "@/components/webcraftly/auth-context";
 
 export const Route = createFileRoute("/contact")({
   component: ContactPage,
 });
 
 function ContactPage() {
+  const { sessionUser, openLoginModal } = useAuthModal();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -30,10 +33,18 @@ function ContactPage() {
   const [isSending, setIsSending] = useState(false);
   const [sentSuccess, setSentSuccess] = useState(false);
 
+  const isPhoneInvalid =
+    phone.trim().length > 0 &&
+    (/[a-zA-Z]/.test(phone) || !/^[\d+\s\-()]+$/.test(phone));
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !phone.trim() || !message.trim()) {
       toast.error("Please fill in all contact fields.");
+      return;
+    }
+    if (isPhoneInvalid || phone.replace(/\D/g, "").length < 10) {
+      toast.error("Please enter a valid phone number containing numbers only (min. 10 digits).");
       return;
     }
 
@@ -176,16 +187,28 @@ function ContactPage() {
                   <span className="text-[10px] font-bold text-[#667085]">Instant Access</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
+                  {sessionUser ? (
+                    <Link
+                      to="/account"
+                      className="flex flex-col items-center justify-center text-center p-3 rounded-xl bg-blue-50/60 border border-[#0866D9]/30 hover:border-[#0866D9] hover:shadow-xs transition-all group"
+                    >
+                      <UserRound className="size-5 text-[#0866D9] mb-1 group-hover:scale-110 transition-transform" />
+                      <span className="font-extrabold text-xs text-[#071C55]">My Account</span>
+                      <span className="text-[9.5px] text-[#667085] truncate max-w-full px-1">{sessionUser.name.split(" ")[0]}</span>
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => openLoginModal({ mode: "signin", role: "customer" })}
+                      className="flex flex-col items-center justify-center text-center p-3 rounded-xl bg-white border border-[#0866D9]/15 hover:border-[#0866D9] hover:shadow-xs transition-all group cursor-pointer"
+                    >
+                      <UserRound className="size-5 text-[#0866D9] mb-1 group-hover:scale-110 transition-transform" />
+                      <span className="font-extrabold text-xs text-[#071C55]">Customer Login</span>
+                      <span className="text-[9.5px] text-[#667085]">Instant Popup</span>
+                    </button>
+                  )}
                   <Link
-                    to="/account"
-                    className="flex flex-col items-center justify-center text-center p-3 rounded-xl bg-white border border-[#0866D9]/15 hover:border-[#0866D9] hover:shadow-xs transition-all group"
-                  >
-                    <UserRound className="size-5 text-[#0866D9] mb-1 group-hover:scale-110 transition-transform" />
-                    <span className="font-extrabold text-xs text-[#071C55]">Customer Login</span>
-                    <span className="text-[9.5px] text-[#667085]">Orders & Quotes</span>
-                  </Link>
-                  <Link
-                    to="/account"
+                    to="/admin"
                     className="flex flex-col items-center justify-center text-center p-3 rounded-xl bg-purple-50/70 border border-purple-200 hover:border-purple-500 hover:shadow-xs transition-all group"
                   >
                     <ShieldCheck className="size-5 text-purple-600 mb-1 group-hover:scale-110 transition-transform" />
@@ -254,8 +277,13 @@ function ContactPage() {
                         />
                       </div>
                       <div>
-                        <label className="block font-bold text-[#071C55] uppercase tracking-wider mb-1.5">
-                          Phone / WhatsApp *
+                        <label className="block font-bold text-[#071C55] uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                          <span>Phone / WhatsApp *</span>
+                          {isPhoneInvalid && (
+                            <span className="text-red-600 font-bold text-[11px] normal-case tracking-normal flex items-center gap-1">
+                              <AlertCircle className="size-3" /> Numbers only
+                            </span>
+                          )}
                         </label>
                         <input
                           type="tel"
@@ -263,8 +291,18 @@ function ContactPage() {
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
                           placeholder="e.g. +91 96188 90557"
-                          className="w-full rounded-xl border border-gray-200 bg-[#F4F8FC] p-3 text-xs text-[#071C55] focus:border-[#0866D9] focus:bg-white focus:outline-hidden"
+                          className={`w-full rounded-xl border p-3 text-xs transition-all focus:outline-hidden ${
+                            isPhoneInvalid
+                              ? "border-red-500 bg-red-50 text-red-900 focus:border-red-600 focus:ring-2 focus:ring-red-200"
+                              : "border-gray-200 bg-[#F4F8FC] text-[#071C55] focus:border-[#0866D9] focus:bg-white"
+                          }`}
                         />
+                        {isPhoneInvalid && (
+                          <p className="mt-1.5 flex items-center gap-1 text-[11px] font-bold text-red-600">
+                            <AlertCircle className="size-3.5 shrink-0" />
+                            Invalid phone number: Please enter numbers only (e.g. +91 96188 90557).
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -365,13 +403,24 @@ function ContactPage() {
                 </div>
 
                 <div className="mt-6 pt-5 border-t border-gray-100">
-                  <Link
-                    to="/account"
-                    className="flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-[#0866D9] to-[#248BEE] py-3 text-xs font-bold text-white shadow-md hover:shadow-lg transition-all"
-                  >
-                    <span>Sign In to Customer Account</span>
-                    <ArrowRight className="size-4" />
-                  </Link>
+                  {sessionUser ? (
+                    <Link
+                      to="/account"
+                      className="flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-[#0866D9] to-[#248BEE] py-3 text-xs font-bold text-white shadow-md hover:shadow-lg transition-all"
+                    >
+                      <span>Open Customer Dashboard</span>
+                      <ArrowRight className="size-4" />
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => openLoginModal({ mode: "signin", role: "customer" })}
+                      className="flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-[#0866D9] to-[#248BEE] py-3 text-xs font-bold text-white shadow-md hover:shadow-lg transition-all cursor-pointer"
+                    >
+                      <span>Open Customer Login Popup</span>
+                      <ArrowRight className="size-4" />
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -404,7 +453,7 @@ function ContactPage() {
 
                 <div className="mt-6 pt-5 border-t border-purple-100">
                   <Link
-                    to="/account"
+                    to="/admin"
                     className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#071C55] py-3 text-xs font-bold text-white shadow-md hover:bg-purple-950 transition-all"
                   >
                     <Lock className="size-3.5 text-purple-300" />

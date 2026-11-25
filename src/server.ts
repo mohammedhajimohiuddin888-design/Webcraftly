@@ -3,6 +3,7 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { auth } from "./lib/auth/index.ts";
+import { handleCustomerAuth } from "./lib/auth/customer-auth.ts";
 import { handleOrderApiRequest } from "./lib/orders/api-handler.ts";
 
 type ServerEntry = {
@@ -53,6 +54,10 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const url = new URL(request.url);
+      if (url.pathname === "/api/auth/customer-login" && request.method === "POST") {
+        return await handleCustomerAuth(request);
+      }
+
       if (url.pathname.startsWith("/api/auth/")) {
         return auth.handler(request);
       }

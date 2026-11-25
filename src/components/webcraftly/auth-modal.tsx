@@ -41,10 +41,14 @@ export function AuthModal() {
       return;
     }
 
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters long.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      // 1. Attempt standard customer sign-in
-      const res = await fetch("/api/auth/sign-in/email", {
+      const res = await fetch("/api/auth/customer-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -66,40 +70,10 @@ export function AuthModal() {
         return;
       }
 
-      // 2. Seamless registration fallback: if user account does not exist yet,
-      // create it automatically with the password they entered so they are never locked out
-      if (password.length >= 6) {
-        try {
-          const signUpRes = await fetch("/api/auth/sign-up/email", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({
-              name: (cleanEmail.split("@")[0] || "Client").replace(/[._-]/g, " "),
-              email: cleanEmail,
-              password,
-            }),
-          });
-          const signUpData = await signUpRes.json();
-          if (signUpRes.ok && signUpData.user) {
-            toast.success(`Welcome to WebCraftly, ${signUpData.user.name || "Client"}! Your account is ready.`);
-            const refreshed = await refreshSession();
-            const activeUser = refreshed || signUpData.user;
-            closeLoginModal();
-            if (successCallback) {
-              successCallback(activeUser);
-            }
-            return;
-          }
-        } catch {
-          // fallback failed, continue to display sign in error
-        }
-      }
-
-      throw new Error(data.message || data.error || "Invalid email or password.");
+      throw new Error(data.message || data.error || "Sign in failed. Please verify your email and password.");
     } catch (err: unknown) {
       const error = err as Error;
-      toast.error(error.message || "Sign in failed. Please verify your email and password.");
+      toast.error(error.message || "Sign in failed.");
     } finally {
       setIsSubmitting(false);
     }
@@ -123,7 +97,7 @@ export function AuthModal() {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch("/api/auth/sign-up/email", {
+      const res = await fetch("/api/auth/customer-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -143,15 +117,13 @@ export function AuthModal() {
 
       const refreshed = await refreshSession();
       const activeUser = refreshed || data.user;
-
       closeLoginModal();
-
       if (successCallback) {
         successCallback(activeUser);
       }
     } catch (err: unknown) {
       const error = err as Error;
-      toast.error(error.message || "Registration failed. Email may already be in use.");
+      toast.error(error.message || "Registration failed.");
     } finally {
       setIsSubmitting(false);
     }
